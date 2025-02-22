@@ -37,11 +37,13 @@ analysysAlgebra = CAlgebra
     foldOverUnaryExpr -- unaryexp
     foldOverFuncCall -- funccall
     foldOverLitInt -- litint
-    --foldOverLitChar -- litchar
-    --foldOverLitDouble -- litdouble
+    foldOverLitChar -- litchar
+    foldOverLitDouble -- litdouble
     foldOverLitVar -- litvar
+    foldOverLitArray -- litarray
 
     foldOverVar -- var
+    foldOverArrayVar -- arrayVar
 
 foldOverProgram :: env -> me -> (p,env)
 foldOverProgram = undefined 
@@ -99,5 +101,11 @@ foldOverLitDouble = undefined
 foldOverLitVar :: env -> String -> (exp,env)
 foldOverLitVar = undefined
 
+foldOverLitArray :: env -> String -> Int -> (exp,env)
+foldOverLitArray = undefined
+
 foldOverVar :: env -> Modifier -> VarType -> String -> (v,env)
 foldOverVar = undefined
+
+foldOverArrayVar :: env -> Modifier -> VarType -> String -> Int -> (v,env)
+foldOverArrayVar = undefined

@@ -89,6 +89,7 @@ pExpression =   pLiteral
                 <|> pFuncCall
                 <|> bracketedExpressions
                 <|> pUnaryExpression
+                <|> pack (punc OpeningRoundBracket) pUnaryExpression (punc ClosingRoundBracket)
 
 pUnaryExpression :: Parser Token Expression
 pUnaryExpression = UnaryExpression <$> pLiteral <*> pOperator
@@ -121,8 +122,9 @@ e2 = foldr genl pExpression leftAssociative
 pLiteral :: Parser Token Expression
 pLiteral =  pLitInt 
             <|> pLitVar
-            -- <|> pLitDouble 
-            -- <|> pLitChar 
+            <|> pLitDouble 
+            <|> pLitChar 
+            <|> pLitArray
 
 pLitInt :: Parser Token Expression
 pLitInt = LitInt <$> parseTokenInt
@@ -136,13 +138,16 @@ pLitChar = LitChar <$> parseTokenChar
 pLitVar :: Parser Token Expression
 pLitVar = LitVar <$> parseTokenName
 
+pLitArray :: Parser Token Expression
+pLitArray = LitArray <$> parseTokenName <*> pack (punc OpeningSquareBracket) parseTokenInt (punc ClosingSquareBracket)
+
 --The reason the pFuncCall function is so slow is the listOf e1 (punc Comma)
 --after testing, I figured out it slows it down majorly
 pFuncCall :: Parser Token Expression
 pFuncCall = FuncCall <$> parseTokenName <*> pack (punc OpeningRoundBracket) (listOf e1 (punc Comma) <|> succeed []) (punc ClosingRoundBracket)
 
 pVar :: Parser Token Variable
-pVar = pNormalVar  -- <|> pArrayVar
+pVar = pNormalVar <|> pArrayVar
 
 pNormalVar :: Parser Token Variable
 pNormalVar = Var

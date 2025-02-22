@@ -22,11 +22,13 @@ data CAlgebra p me s e v env = CAlgebra {
     unaryexp :: env -> e -> Operator -> (e,env),
     funccall :: env -> String -> [e] -> (e,env),
     litint :: env -> Int -> (e,env),
-    --litchar :: env -> Char -> (e,env),
-    --litdouble :: env -> Double -> (e,env),
+    litchar :: env -> Char -> (e,env),
+    litdouble :: env -> Double -> (e,env),
     litvar :: env -> String -> (e,env),
+    litArray :: env -> String -> Int -> (e,env),
 
-    var :: env -> Modifier -> VarType -> String -> (v,env)
+    var :: env -> Modifier -> VarType -> String -> (v,env),
+    array :: env -> Modifier -> VarType -> String -> Int -> (v,env)
     }
 
 cFolder :: CAlgebra p me s e v env-> env -> Program -> (p,env)
@@ -81,8 +83,10 @@ cFolder CAlgebra{..} env input = result env input where
                 g env [] step = (step,env)
                 (finale,finalenv) = g env e []
         efold env (LitInt int) = litint env int
-        --efold env (LitChar char) = litchar env char
-        --efold env (LitDouble double) = litdouble env double
+        efold env (LitChar char) = litchar env char
+        efold env (LitDouble double) = litdouble env double
         efold env (LitVar string) = litvar env string
+        efold env (LitArray string int) = litArray env string int
 
         vfold env (Var mo vt string) = var env mo vt string
+        vfold env (ArrayVar mo vt string int) = array env mo vt string int

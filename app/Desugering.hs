@@ -28,11 +28,13 @@ desugeringAlgebra = CAlgebra
     foldOverUnaryExpr -- unaryexp
     foldOverFuncCall -- funccall
     foldOverLitInt -- litint
-    --foldOverLitChar -- litchar
-    --foldOverLitDouble -- litdouble
+    foldOverLitChar -- litchar
+    foldOverLitDouble -- litdouble
     foldOverLitVar -- litvar
+    foldOverLitArray --litarray
 
     foldOverVar -- var
+    foldOverArrayVar -- arrayvar
 
 foldOverProgram :: () -> Members -> (Program,())
 foldOverProgram env me = (Program me,env) 
@@ -97,5 +99,11 @@ foldOverLitDouble env double = (LitDouble double, env)
 foldOverLitVar :: () -> String -> (Expression,())
 foldOverLitVar env name = (LitVar name, env)
 
+foldOverLitArray :: env -> String -> Int -> (Expression,env)
+foldOverLitArray env string int = (LitArray string int, env)
+
 foldOverVar :: () -> Modifier -> VarType -> String -> (Variable,())
 foldOverVar env mod vtype name = (Var mod vtype name, env)
+
+foldOverArrayVar :: env -> Modifier -> VarType -> String -> Int -> (Variable,env)
+foldOverArrayVar env mo vart string int = (ArrayVar mo vart string int, env)
