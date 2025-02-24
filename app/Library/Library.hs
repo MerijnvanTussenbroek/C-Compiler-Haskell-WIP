@@ -1,7 +1,7 @@
 module Library.Library where
 
 import Data.Char
-import Prelude hiding ((<$>),(<*>),(<|>))
+import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
 
 import Library.ElementaryParsers
 import Library.ParserCombinators

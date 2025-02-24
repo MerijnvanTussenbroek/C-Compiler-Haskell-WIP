@@ -1,6 +1,6 @@
 module Library.ParserCombinators where
 
-import Prelude hiding ((<$>),(<*>),(<|>))
+import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
 import Library.ElementaryParsers
 
 -- parser combinators

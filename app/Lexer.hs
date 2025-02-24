@@ -4,7 +4,7 @@ import AbstractSyntax
 
 import Library.Library
 import Library.ParserCombinators
-import Prelude hiding ((<$>),(<*>),(<|>),(<$),(<*))
+import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
 import Library.ElementaryParsers
 
 lexSpace :: Parser Char Token
