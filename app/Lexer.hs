@@ -7,6 +7,7 @@ import Library.ParserCombinators
 import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
 import Library.ElementaryParsers
 
+
 lexSpace :: Parser Char Token
 lexSpace = Space <$ parseSpaces
 
@@ -45,7 +46,8 @@ lexComma :: Parser Char Token
 lexComma = Comma <$ symbol ','
 
 lexIdentifier :: Parser Char Token
-lexIdentifier = Name <$> greedy lower
+lexIdentifier = ((\a b -> Name (a:b)) <$> lower <*> greedy parseAnySymbol)
+                <<|> (Name . (: []) <$> lower)
 
 lexStatementTokens :: Parser Char Token
 lexStatementTokens  = (IfStatement <$ token "if") 
