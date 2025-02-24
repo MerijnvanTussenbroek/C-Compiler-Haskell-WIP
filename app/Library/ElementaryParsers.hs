@@ -25,6 +25,13 @@ token a b   | a == take l b = [(a, drop l b)]
     where
         l = length a
 
+nottoken :: Eq s => [s] -> Parser s [s]
+nottoken _ []  = []
+nottoken a b    | a /= take l b = [(a, drop 1 b)]
+                | otherwise = []
+    where
+        l = length a
+
 failp :: Parser s a
 failp _ = []
 

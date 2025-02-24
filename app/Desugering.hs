@@ -80,7 +80,7 @@ foldOverBinaryExpr x AndAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp AndOp e1 
 foldOverBinaryExpr x OrAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp OrOp e1 e2),x)
 foldOverBinaryExpr x XorAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp XorOp e1 e2),x)
 foldOverBinaryExpr x LessOrEqualTo e1 e2 = (BinaryExp OrOp (BinaryExp LessThan e1 e2) (BinaryExp EqualTo e1 e2),x)
-foldOverBinaryExpr x GreaterOrEqualTo e1 e2 = (BinaryExp OrOp (BinaryExp GreaterThan e1 e2) (BinaryExp EqualTo e1 e2),x)
+foldOverBinaryExpr x GreaterOrEqualTo e1 e2 = (BinaryExp AndOp (BinaryExp GreaterThan e1 e2) (BinaryExp EqualTo e1 e2),x)
 foldOverBinaryExpr x op e1 e2 = (BinaryExp op e1 e2,x)
 
 foldOverUnaryExpr :: () -> Expression -> Operator -> (Expression,())

@@ -4,17 +4,21 @@ import AbstractSyntax
 
 import Library.Library
 import Library.ParserCombinators
-import Prelude hiding ((<$>),(<*>),(<|>),(<$))
+import Prelude hiding ((<$>),(<*>),(<|>),(<$),(<*))
 import Library.ElementaryParsers
 
 lexSpace :: Parser Char Token
 lexSpace = Space <$ parseSpaces
 
-lexSingleLineComment :: Parser Char Token -- doesn't work properly yet
-lexSingleLineComment = (\_ _ -> Comment) <$> token "//" <*> greedy (satisfy (/= '\n'))
+lexSingleLineComment :: Parser Char Token
+lexSingleLineComment = Comment <$ token "//" <* greedy (satisfy (/= '\n'))
 
-lexMultiLineComment :: Parser Char Token -- doesn't work at all yet
-lexMultiLineComment = (\_ _ _ -> Comment) <$> token "/*" <*> greedy parseAnySymbol <*> token "*/"
+lexSingleLineComment2 :: Parser Char Token
+lexSingleLineComment2 = Comment <$ token "//"
+
+lexMultiLineComment :: Parser Char Token
+lexMultiLineComment =   (Comment <$ token "/*" <* greedy (nottoken "*/") <* token "*/")
+                        <|> (Comment <$ token "/*" <* token "*/")
 
 lexSemicolon :: Parser Char Token
 lexSemicolon = Semicolon <$ symbol ';'
@@ -61,12 +65,12 @@ lexBoolVar =    (BooleanValue True <$ token "true")
                 <|> (BooleanValue False <$ token "false")
 
 lexCharVar :: Parser Char Token
-lexCharVar = (\_ a _ -> Character a ) <$> symbol '\'' <*> parseChar <*> symbol '\''
+lexCharVar = Character <$> pack (symbol '\'') parseChar (symbol '\'')
 
 lexModifier :: Parser Char Token
-lexModifier =   ((\_ -> Modifier Static)<$>token "static") 
-                <|> ((\_ -> Modifier Signed) <$> token "signed") 
-                <|> ((\_ -> Modifier Unsigned)<$>token "unsigned")
+lexModifier =   (Modifier Static <$ token "static") 
+                <|> (Modifier Signed <$ token "signed") 
+                <|> (Modifier Unsigned <$ token "unsigned")
 
 lexType :: Parser Char Token
 lexType =   (Type IntType <$ token "int") 
@@ -95,6 +99,7 @@ lexers :: [Parser Char Token]
 lexers =    [
             lexSpace,
             lexSingleLineComment,
+            lexSingleLineComment2,
             lexMultiLineComment,
             lexSemicolon,
             lexClosingSquareBracket,
