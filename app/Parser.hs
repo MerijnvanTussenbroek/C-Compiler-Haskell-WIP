@@ -44,7 +44,13 @@ pStatementBlock :: Parser Token Statements
 pStatementBlock = StatementBlock <$> greedy pStatement
 
 pStatementDeclaration :: Parser Token Statements
-pStatementDeclaration = StatementDeclaration <$> pVar <* pSemi
+pStatementDeclaration = (StatementDeclaration <$> pVar
+                        <|> ((\a b c (Operator d) e-> StatementBlock [StatementDeclaration (Var a b c), StatementExpression (BinaryExp d e (LitVar c))]) 
+                        <$>(pModifier <<|> succeed None)
+                        <*> pType
+                        <*> parseTokenName
+                        <*> symbol (Operator Assign)
+                        <*> e1)) <* pSemi
 
 pStatementDeclarationAndExpression :: Parser Token Statements
 pStatementDeclarationAndExpression = undefined
@@ -124,6 +130,7 @@ pLiteral =  pLitInt
             <|> pLitVar
             <|> pLitDouble 
             <|> pLitChar 
+            <|> pLitBool
             <|> pLitArray
 
 pLitInt :: Parser Token Expression
@@ -134,6 +141,9 @@ pLitDouble = LitDouble <$> parseTokenDouble
 
 pLitChar :: Parser Token Expression
 pLitChar = LitChar <$> parseTokenChar
+
+pLitBool :: Parser Token Expression
+pLitBool = LitBool <$> parseTokenBool
 
 pLitVar :: Parser Token Expression
 pLitVar = LitVar <$> parseTokenName
@@ -185,6 +195,10 @@ parseTokenDouble _ = failp []
 parseTokenChar :: Parser Token Char
 parseTokenChar ((Character x):xs) = [(x,xs)]
 parseTokenChar _ = failp []
+
+parseTokenBool :: Parser Token Bool
+parseTokenBool ((BooleanValue x):xs) = [(x,xs)]
+parseTokenBool _ = failp []
 
 parseTokenName :: Parser Token Identifier
 parseTokenName ((Name x):xs) = [(x,xs)]

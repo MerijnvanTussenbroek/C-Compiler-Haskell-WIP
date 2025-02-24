@@ -66,7 +66,9 @@ executable C-compiler
         AnalysisAlgebra,
         Desugering,
         Library.AssemblyLanguageAST,
-        CodeGen
+        CodeGen,
+        Library.EnvironmentLibrary,
+        Evaluator
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 

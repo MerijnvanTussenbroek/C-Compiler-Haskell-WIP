@@ -25,6 +25,7 @@ data CAlgebra p me s e v env = CAlgebra {
     litchar :: env -> Char -> (e,env),
     litdouble :: env -> Double -> (e,env),
     litvar :: env -> String -> (e,env),
+    litbool :: env -> Bool -> (e,env),
     litArray :: env -> String -> Int -> (e,env),
 
     var :: env -> Modifier -> VarType -> String -> (v,env),
@@ -86,6 +87,7 @@ cFolder CAlgebra{..} env input = result env input where
         efold env (LitChar char) = litchar env char
         efold env (LitDouble double) = litdouble env double
         efold env (LitVar string) = litvar env string
+        efold env (LitBool bool) = litbool env bool
         efold env (LitArray string int) = litArray env string int
 
         vfold env (Var mo vt string) = var env mo vt string

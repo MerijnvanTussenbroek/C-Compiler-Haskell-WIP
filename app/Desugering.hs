@@ -31,6 +31,7 @@ desugeringAlgebra = CAlgebra
     foldOverLitChar -- litchar
     foldOverLitDouble -- litdouble
     foldOverLitVar -- litvar
+    foldOverLitBool -- litbool
     foldOverLitArray --litarray
 
     foldOverVar -- var
@@ -78,6 +79,8 @@ foldOverBinaryExpr x ModAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp Mod e1 e2
 foldOverBinaryExpr x AndAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp AndOp e1 e2),x)
 foldOverBinaryExpr x OrAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp OrOp e1 e2),x)
 foldOverBinaryExpr x XorAssign e1 e2 = (BinaryExp Assign e1 (BinaryExp XorOp e1 e2),x)
+foldOverBinaryExpr x LessOrEqualTo e1 e2 = (BinaryExp OrOp (BinaryExp LessThan e1 e2) (BinaryExp EqualTo e1 e2),x)
+foldOverBinaryExpr x GreaterOrEqualTo e1 e2 = (BinaryExp OrOp (BinaryExp GreaterThan e1 e2) (BinaryExp EqualTo e1 e2),x)
 foldOverBinaryExpr x op e1 e2 = (BinaryExp op e1 e2,x)
 
 foldOverUnaryExpr :: () -> Expression -> Operator -> (Expression,())
@@ -98,6 +101,9 @@ foldOverLitDouble env double = (LitDouble double, env)
 
 foldOverLitVar :: () -> String -> (Expression,())
 foldOverLitVar env name = (LitVar name, env)
+
+foldOverLitBool :: () -> Bool -> (Expression,())
+foldOverLitBool env bool = (LitBool bool, env)
 
 foldOverLitArray :: env -> String -> Int -> (Expression,env)
 foldOverLitArray env string int = (LitArray string int, env)
