@@ -46,7 +46,7 @@ pStatementBlock = StatementBlock <$> greedy pStatement
 pStatementDeclaration :: Parser Token Statements
 pStatementDeclaration = (StatementDeclaration <$> pVar
                         <|> ((\a b c (Operator d) e-> StatementBlock [StatementDeclaration (Var a b c), StatementExpression (BinaryExp d e (LitVar c))]) 
-                        <$>(pModifier <<|> succeed None)
+                        <$> (pModifier <<|> succeed None)
                         <*> pType
                         <*> parseTokenName
                         <*> symbol (Operator Assign)
