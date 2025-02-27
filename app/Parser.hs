@@ -103,16 +103,12 @@ pUnaryExpression = UnaryExpression <$> pLiteral <*> pOperator
 genr :: [Operator] -> Parser Token Expression -> Parser Token Expression
 genr ops p = chainr p (choice (map f ops))
     where
-        f s = helperfunc <$> symbol (Operator s)
+        f s = (\(Operator x) -> BinaryExp x) <$> symbol (Operator s)
 
 genl :: [Operator] -> Parser Token Expression -> Parser Token Expression
 genl ops p = chainl p (choice (map f ops))
     where 
-        f s = helperfunc <$> symbol (Operator s)
-
-helperfunc :: Token -> Expression -> Expression -> Expression
-helperfunc (Operator x) = BinaryExp x
-
+        f s = (\(Operator x) -> BinaryExp x) <$> symbol (Operator s)
 
 -- [[Assign], [XorAssign, OrAssign], [AndAssign], [MinAssign, AddAssign], [ModAssign, DivAssign, MulAssign]]
 rightAssociative :: [[Operator]]
