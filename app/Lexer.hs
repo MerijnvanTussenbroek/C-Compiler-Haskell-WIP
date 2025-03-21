@@ -62,10 +62,6 @@ lexIntVar = IntegerVar <$> parseInteger
 lexDoubleVar :: Parser Char Token
 lexDoubleVar = DoubleVar <$> parseDouble
 
-lexBoolVar :: Parser Char Token
-lexBoolVar =    (BooleanValue True <$ token "true")
-                <|> (BooleanValue False <$ token "false")
-
 lexCharVar :: Parser Char Token
 lexCharVar = Character <$> pack (symbol '\'') parseChar (symbol '\'')
 
@@ -74,11 +70,13 @@ lexModifier =   (Modifier Static <$ token "static")
                 <|> (Modifier Signed <$ token "signed") 
                 <|> (Modifier Unsigned <$ token "unsigned")
 
+lexPointerType :: Parser Char Token
+lexPointerType = undefined
+
 lexType :: Parser Char Token
 lexType =   (Type IntType <$ token "int") 
             <|> (Type DoubleType <$ token "double") 
             <|> (Type Void <$ token "void")
-            <|> (Type BoolType <$ token "bool")
             <|> (Type CharType <$ token "char")
 
 operatorList :: [(Operator, String)]
@@ -117,7 +115,6 @@ lexers =    [
             lexCharVar,
             lexModifier,
             lexType,
-            lexBoolVar,
             lexStatementTokens,
             lexIdentifier
             ]

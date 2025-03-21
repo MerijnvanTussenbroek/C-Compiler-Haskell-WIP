@@ -40,7 +40,6 @@ analysysAlgebra = CAlgebra
     foldOverLitChar -- litchar
     foldOverLitDouble -- litdouble
     foldOverLitVar -- litvar
-    foldOverLitBool
     foldOverLitArray -- litarray
 
     foldOverVar -- var
@@ -101,9 +100,6 @@ foldOverLitDouble = undefined
 
 foldOverLitVar :: env -> String -> (exp,env)
 foldOverLitVar = undefined
-
-foldOverLitBool :: env -> Bool -> (exp,env)
-foldOverLitBool = undefined
 
 foldOverLitArray :: env -> String -> Int -> (exp,env)
 foldOverLitArray = undefined

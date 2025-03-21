@@ -31,7 +31,6 @@ desugeringAlgebra = CAlgebra
     foldOverLitChar -- litchar
     foldOverLitDouble -- litdouble
     foldOverLitVar -- litvar
-    foldOverLitBool -- litbool
     foldOverLitArray --litarray
 
     foldOverVar -- var
@@ -101,9 +100,6 @@ foldOverLitDouble env double = (LitDouble double, env)
 
 foldOverLitVar :: () -> String -> (Expression,())
 foldOverLitVar env name = (LitVar name, env)
-
-foldOverLitBool :: () -> Bool -> (Expression,())
-foldOverLitBool env bool = (LitBool bool, env)
 
 foldOverLitArray :: env -> String -> Int -> (Expression,env)
 foldOverLitArray env string int = (LitArray string int, env)

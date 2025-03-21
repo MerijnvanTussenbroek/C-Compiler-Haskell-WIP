@@ -20,7 +20,6 @@ data Token  = Space
             | IntegerVar Int
             | DoubleVar Double
             | Character Char
-            | BooleanValue Bool
             | IfStatement
             | ElseStatement
             | WhileStatement
@@ -49,13 +48,14 @@ data Statements     = StatementBlock [Statements]
 
 data Expression     = BinaryExp Operator Expression Expression
                     | UnaryExpression Expression Operator
+                    | UnaryExpression2 Operator Expression
                     | FuncCall Identifier [Expression]
                     | LitInt Int 
                     | LitChar Char 
                     | LitDouble Double
                     | LitVar String
+                    | LitPointer String
                     | LitArray String Int
-                    | LitBool Bool
                     -- put() and printf() need to be hardcoded into the compiler, both print a string
                     -- scanf() asks for input
                     -- basic math functions also need to be hard coded in (think sin, cos , tan, etc)
@@ -65,8 +65,7 @@ data VarType    = Void
                 | IntType 
                 | CharType
                 | DoubleType
-                | BoolType
-                | PointerType
+                | PointerType VarType
     deriving(Show, Eq)
 
 data Variable   = Var Modifier VarType Identifier
