@@ -54,7 +54,7 @@ data Expression     = BinaryExp Operator Expression Expression
                     | LitChar Char 
                     | LitDouble Double
                     | LitVar String
-                    | LitPointer String
+                    | LitPointer VarType String
                     | LitArray String Int
                     -- put() and printf() need to be hardcoded into the compiler, both print a string
                     -- scanf() asks for input
@@ -110,6 +110,9 @@ data Operator   = Mul
                 | AddOne
                 | MinusOne
                 | NotOperator
+
+                | AddressOperator -- &
+                | PointerOperator -- *
     deriving(Show, Eq)
                 
 type Identifier = String;

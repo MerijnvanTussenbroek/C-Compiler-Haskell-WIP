@@ -98,7 +98,8 @@ pExpression =   pLiteral
                 <|> pack (punc OpeningRoundBracket) pUnaryExpression (punc ClosingRoundBracket)
 
 pUnaryExpression :: Parser Token Expression
-pUnaryExpression = UnaryExpression <$> pLiteral <*> pOperator
+pUnaryExpression =  (UnaryExpression <$> pLiteral <*> pOperator)
+                    <|> (UnaryExpression2 <$> pOperator <*> pLiteral)
 
 genr :: [Operator] -> Parser Token Expression -> Parser Token Expression
 genr ops p = chainr p (choice (map f ops))

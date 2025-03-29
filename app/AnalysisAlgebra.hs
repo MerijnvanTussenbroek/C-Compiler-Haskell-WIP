@@ -35,6 +35,7 @@ analysysAlgebra = CAlgebra
 
     foldOverBinaryExpr -- binaryexp
     foldOverUnaryExpr -- unaryexp
+    foldOverUnaryExpr2 -- unaryexp2
     foldOverFuncCall -- funccall
     foldOverLitInt -- litint
     foldOverLitChar -- litchar
@@ -84,6 +85,9 @@ foldOverBinaryExpr env op e1 e2 = undefined
 
 foldOverUnaryExpr :: env -> exp -> Operator -> (exp,env)
 foldOverUnaryExpr = undefined
+
+foldOverUnaryExpr2 :: env -> Operator -> exp -> (exp,env)
+foldOverUnaryExpr2 = undefined
 
 foldOverFuncCall :: env -> String -> [exp] -> (exp,env)
 foldOverFuncCall env "printf" xs = undefined

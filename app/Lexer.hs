@@ -71,7 +71,7 @@ lexModifier =   (Modifier Static <$ token "static")
                 <|> (Modifier Unsigned <$ token "unsigned")
 
 lexPointerType :: Parser Char Token
-lexPointerType = undefined
+lexPointerType = (\(Type x) _ -> Type (PointerType x)) <$> lexType <*> symbol '*' 
 
 lexType :: Parser Char Token
 lexType =   (Type IntType <$ token "int") 
@@ -83,7 +83,7 @@ operatorList :: [(Operator, String)]
 operatorList =  [
                 (MinAssign,"-="),(AddAssign,"+="),(DivAssign,"/="),(MulAssign,"*="),(ModAssign,"%="),
                 (AndAssign,"&="),(OrAssign,"|="),(XorAssign,"^="),(EqualTo,"=="),(NotEqualTo,"!="),
-                (AddOne,"++"),(MinusOne,"--"),
+                (AddOne,"++"),(MinusOne,"--"), (AddressOperator,"&"),
                 (LessOrEqualTo,"<="),(GreaterOrEqualTo,">="),(LessThan,"<"),(GreaterThan,">"),
                 (AndOp,"&&"),(OrOp,"||"),(NotOp,"!"),
                 (Mul,"*"),(Add,"+"),(Min,"-"),(Div,"/"),(Mod,"%")
@@ -94,6 +94,12 @@ foldOverOperators = foldr ((<<|>) . (\(a,b) -> a <$ token b)) (Assign <$ token "
 
 lexOperator :: Parser Char Token
 lexOperator = Operator <$> foldOverOperators operatorList
+
+lexPointerOperator :: Parser Char Token
+lexPointerOperator ('*':x:xs)   | x == ' ' = [(Operator Mul,xs)]
+                                | otherwise = [(Operator PointerOperator,x:xs)]
+lexPointerOperator (_:xs) = []
+lexPointerOperator [] = []
 
 lexers :: [Parser Char Token]
 lexers =    [
@@ -108,12 +114,14 @@ lexers =    [
             lexOpeningRoundBracket,
             lexOpeningBracket,
             lexClosingBracket,
+            lexPointerOperator,
             lexOperator,
             lexComma,
             lexDoubleVar,
             lexIntVar,
             lexCharVar,
             lexModifier,
+            lexPointerType,
             lexType,
             lexStatementTokens,
             lexIdentifier

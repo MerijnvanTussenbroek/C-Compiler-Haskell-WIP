@@ -26,6 +26,7 @@ desugeringAlgebra = CAlgebra
 
     foldOverBinaryExpr -- binaryexp
     foldOverUnaryExpr -- unaryexp
+    foldOverUnaryExpr2 -- unaryexp2
     foldOverFuncCall -- funccall
     foldOverLitInt -- litint
     foldOverLitChar -- litchar
@@ -85,6 +86,10 @@ foldOverBinaryExpr x op e1 e2 = (BinaryExp op e1 e2,x)
 foldOverUnaryExpr :: () -> Expression -> Operator -> (Expression,())
 foldOverUnaryExpr env exp AddOne = (BinaryExp Assign exp (BinaryExp Add exp (LitInt 1)), env)
 foldOverUnaryExpr env exp MinusOne = (BinaryExp Assign exp (BinaryExp Min exp (LitInt 1)), env)
+foldOverUnaryExpr env exp op = (UnaryExpression exp op, env)
+
+foldOverUnaryExpr2 :: () -> Operator -> Expression -> (Expression, ())
+foldOverUnaryExpr2 env op exp = (UnaryExpression2 op exp, env)
 
 foldOverFuncCall :: () -> String -> [Expression] -> (Expression,())
 foldOverFuncCall env name xs = (FuncCall name xs, env)

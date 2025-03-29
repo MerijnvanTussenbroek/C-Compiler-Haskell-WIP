@@ -20,6 +20,7 @@ data CAlgebra p me s e v env = CAlgebra {
 
     binaryexp :: env -> Operator -> e -> e -> (e,env),
     unaryexp :: env -> e -> Operator -> (e,env),
+    unaryexp2 :: env ->  Operator -> e -> (e,env),
     funccall :: env -> String -> [e] -> (e,env),
     litint :: env -> Int -> (e,env),
     litchar :: env -> Char -> (e,env),
@@ -87,6 +88,9 @@ cFolder CAlgebra{..} = pfold where
         efold env (UnaryExpression e o) = unaryexp finalenv finale o
             where
                 (finale,finalenv) = efold env e
+        efold env (UnaryExpression2 o e) = unaryexp2 finalenv o finale
+            where
+                (finale, finalenv) = efold env e
 
         efold env (FuncCall string e) = funccall finalenv string finale
             where
