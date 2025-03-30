@@ -2,41 +2,41 @@ module Library.ElementaryParsers where
 
 import Data.Char
 
--- parser type
-type Parser input output = [input] -> [(output,[input])]
+newtype Parser input output = Parser { runParse :: [input] -> [(output,[input])] }
 
--- elementary parsers
 anySymbol :: Parser s s
-anySymbol (x:xs) = [(x,xs)]
-anySymbol [] = []
+anySymbol = Parser (\input -> case input of
+        (x:xs) -> [(x,xs)]
+        [] -> [])
+
+satisfy :: (s -> Bool) -> Parser s s
+satisfy f = Parser $ \input -> case input of
+        (x:xs)  | f x -> [(x,xs)]
+                | otherwise -> []
+        [] -> []
 
 symbol :: Eq s => s -> Parser s s
 symbol s = satisfy (== s)
 
-satisfy :: (s -> Bool) -> Parser s s
-satisfy _ []    = []
-satisfy f (x:xs)| f x = [(x,xs)]
-                | otherwise  = []
-
 token :: Eq s => [s] -> Parser s [s]
-token _ []  = []
-token a b   | a == take l b = [(a, drop l b)]
-            | otherwise = []
-    where
-        l = length a
+token token = Parser $ \input -> case input of
+        xs      | token == take l xs -> [(token, drop l xs)]
+                | otherwise -> []
+        where
+                l = length token
 
 nottoken :: Eq s => [s] -> Parser s [s]
-nottoken _ []  = []
-nottoken a b    | a /= take l b = [(a, drop 1 b)]
-                | otherwise = []
-    where
-        l = length a
+nottoken token = Parser $ \input -> case input of
+        xs      | token /= take l xs -> [(token, drop 1 xs)]
+                | otherwise -> []
+        where
+                l = length token
 
 failp :: Parser s a
-failp _ = []
+failp = Parser $ \input -> []
 
 succeed :: a -> Parser s a
-succeed s xs = [(s,xs)]
+succeed forcedInput = Parser $ \input -> [(forcedInput, input)]
 
-epsilon :: Parser s ()
-epsilon = succeed ()
+eof :: Show s => Parser s ()
+eof = Parser $ \input -> if null input then [((),input)] else []

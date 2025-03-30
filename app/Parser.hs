@@ -3,10 +3,10 @@ import AbstractSyntax
 import Library.Library
 import Library.ElementaryParsers
 import Library.ParserCombinators 
-import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
+import Control.Applicative
 
-parser :: Parser Token Program
-parser = pProgram <* eof
+parse :: Parser Token Program
+parse = pProgram <* eof
 
 pProgram :: Parser Token Program
 pProgram = Program <$> pMemberBlock
@@ -17,7 +17,7 @@ pMember =   pMemberStatement
             <|> pMemberFunction
 
 pMemberBlock :: Parser Token Members
-pMemberBlock = MemberBlock <$> greedy pMember
+pMemberBlock = MemberBlock <$> greedy1 pMember
 
 pMemberDeclaration :: Parser Token Members
 pMemberDeclaration = MemberDeclaration <$> pVar <* pSemi
@@ -41,7 +41,7 @@ pStatement =    pStatementExpression
                 <|> pStatementReturn
 
 pStatementBlock :: Parser Token Statements
-pStatementBlock = StatementBlock <$> greedy pStatement
+pStatementBlock = StatementBlock <$> greedy1 pStatement
 
 pStatementDeclaration :: Parser Token Statements
 pStatementDeclaration = (StatementDeclaration <$> pVar
@@ -62,33 +62,40 @@ pStatementReturn :: Parser Token Statements
 pStatementReturn = StatementReturn <$> pack (punc ReturnStatement) e1 pSemi
 
 pStatementIfElse :: Parser Token Statements
-pStatementIfElse =  StatementIfElse
-                    <$> punc IfStatement
-                    *> bracketedExpressions
-                    <*> bracketedStatements
-                    <*> maybeElse
+pStatementIfElse = do
+    punc IfStatement
+    exps <- bracketedExpressions
+    stats <- bracketedStatements
+    mElse <- maybeElse
+    return (StatementIfElse exps stats mElse)
     where
         maybeElse = (punc ElseStatement *> bracketedStatements)
                     <|> succeed (StatementBlock [])
 
 
 pStatementWhile :: Parser Token Statements
-pStatementWhile = StatementWhile <$> punc WhileStatement *> bracketedExpressions <*> bracketedStatements
+pStatementWhile = do
+    punc WhileStatement
+    exps <- bracketedExpressions
+    stats <- bracketedStatements
+    return (StatementWhile exps stats)
 
 --desugering for statements to while loops
 pStatementFor :: Parser Token Statements
-pStatementFor = (\a b c d e -> StatementBlock [StatementDeclaration a, StatementWhile b (StatementBlock [e, StatementExpression d])])
-    <$> punc ForStatement
-    *> punc OpeningRoundBracket
-    *> pVar
-    <*> punc Comma
-    *> e1
-    <*> pSemi
-    *> e1
-    <*> pSemi
-    *> e1
-    <*> punc ClosingRoundBracket
-    *>  pack (punc OpeningBracket) (pStatementBlock <<|> succeed (StatementBlock [])) (punc ClosingBracket)
+pStatementFor = do
+    punc ForStatement
+    punc OpeningRoundBracket
+    var <- pVar
+    punc Comma
+    exp1 <- e1
+    pSemi
+    exp2 <- e1
+    pSemi
+    exp3 <- e1
+    punc ClosingRoundBracket
+    stats <- pack (punc OpeningBracket) (pStatementBlock <<|> succeed (StatementBlock [])) (punc ClosingBracket)
+    return (StatementBlock [StatementDeclaration var, StatementWhile exp1 (StatementBlock [stats, StatementExpression exp3])])
+
 
 pExpression :: Parser Token Expression
 pExpression =   pLiteral
@@ -111,9 +118,8 @@ genl ops p = chainl p (choice (map f ops))
     where 
         f s = (\(Operator x) -> BinaryExp x) <$> symbol (Operator s)
 
--- [[Assign], [XorAssign, OrAssign], [AndAssign], [MinAssign, AddAssign], [ModAssign, DivAssign, MulAssign]]
 rightAssociative :: [[Operator]]
-rightAssociative = [[Assign], [MinAssign, AddAssign], [ModAssign, DivAssign, MulAssign]]
+rightAssociative = [[Assign], [XorAssign, OrAssign], [AndAssign], [MinAssign, AddAssign], [ModAssign, DivAssign, MulAssign]]
 e1 :: Parser Token Expression
 e1 = foldr genr e2 rightAssociative
 
@@ -178,29 +184,36 @@ pSemi :: Parser Token Token
 pSemi = punc Semicolon
 
 parseTokenInt :: Parser Token Int
-parseTokenInt ((IntegerVar x):xs) = [(x,xs)]
-parseTokenInt _ = failp []
+parseTokenInt = anySymbol >>= \xs -> case xs of
+    IntegerVar x -> return x
+    _ -> pure failp []
 
 parseTokenDouble :: Parser Token Double
-parseTokenDouble ((DoubleVar x):xs) = [(x,xs)]
-parseTokenDouble _ = failp []
+parseTokenDouble = anySymbol >>= \xs -> case xs of
+    DoubleVar x -> return x
+    _ -> pure failp []
 
 parseTokenChar :: Parser Token Char
-parseTokenChar ((Character x):xs) = [(x,xs)]
-parseTokenChar _ = failp []
+parseTokenChar = anySymbol >>= \xs -> case xs of
+    Character x -> return x
+    _ -> pure failp []
 
 parseTokenName :: Parser Token Identifier
-parseTokenName ((Name x):xs) = [(x,xs)]
-parseTokenName _ = failp []
+parseTokenName = anySymbol >>= \xs -> case xs of
+    Name x -> return x
+    _ -> pure failp []
 
 pType :: Parser Token VarType
-pType ((Type x):xs) = [(x,xs)]
-pType _ = failp []
+pType = anySymbol >>= \xs -> case xs of
+    Type x -> return x
+    _ -> pure failp []
 
 pModifier :: Parser Token Modifier
-pModifier ((Modifier x):xs) = [(x,xs)]
-pModifier _ = failp []
+pModifier = anySymbol >>= \xs -> case xs of
+    Modifier x -> return x
+    _ -> pure failp []
 
 pOperator :: Parser Token Operator
-pOperator ((Operator x):xs) = [(x,xs)]
-pOperator _ = failp []
+pOperator = anySymbol >>= \xs -> case xs of
+    Operator x -> return x
+    _ -> pure failp []

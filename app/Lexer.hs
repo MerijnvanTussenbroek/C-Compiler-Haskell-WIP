@@ -4,12 +4,12 @@ import AbstractSyntax
 
 import Library.Library
 import Library.ParserCombinators
-import Prelude hiding ((<$>),(<*>),(<|>),(<<|>),(<*),(*>),(<$))
 import Library.ElementaryParsers
+import Control.Applicative
 
 
 lexSpace :: Parser Char Token
-lexSpace = Space <$ parseSpaces
+lexSpace = Space <$ greedy parseSpaces
 
 lexSingleLineComment :: Parser Char Token
 lexSingleLineComment = Comment <$ token "//" <* greedy (satisfy (/= '\n'))
@@ -96,14 +96,14 @@ lexOperator :: Parser Char Token
 lexOperator = Operator <$> foldOverOperators operatorList
 
 lexPointerOperator :: Parser Char Token
-lexPointerOperator ('*':x:xs)   | x == ' ' = [(Operator Mul,xs)]
-                                | otherwise = [(Operator PointerOperator,x:xs)]
-lexPointerOperator (_:xs) = []
-lexPointerOperator [] = []
+lexPointerOperator = Parser $ \input -> case input of
+    ('*':x:xs)  | x == ' ' -> [(Operator Mul,xs)]
+                | otherwise -> [(Operator PointerOperator,x:xs)]
+    (_:xs) -> []
+    [] -> []
 
 lexers :: [Parser Char Token]
 lexers =    [
-            lexSpace,
             lexSingleLineComment,
             lexSingleLineComment2,
             lexMultiLineComment,
@@ -133,4 +133,4 @@ filteringFunction Comment = False
 filteringFunction _ = True
 
 lexer :: Parser Char [Token]
-lexer = filter filteringFunction <$> greedy (greedyChoice lexers)
+lexer = fmap (filter filteringFunction) (greedy (lexSpace *> greedyChoice lexers))
