@@ -1,15 +1,6 @@
-int main(){
+int main()
+{
+    int y;
 
-    int x = 5;
-
-    x = x * 5;
-
-    x -= 5;
-
-    x /= 4;
-
-    x++;
-    
-    printf(x);
-    
+    y = 7;
 }

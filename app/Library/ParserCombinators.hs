@@ -5,7 +5,6 @@ import Library.ElementaryParsers
 
 import Control.Applicative
 import Control.Monad
-import Debug.Trace (trace)
 
 -- class definition
 
@@ -39,4 +38,4 @@ instance MonadPlus (Parser s) where
 
 infixr 3 <<|>
 (<<|>) :: Parser s a -> Parser s a -> Parser s a
-p <<|> q = trace   "<<|>" Parser $ \input -> let r = runParse p input in if null r then runParse q input else r
+p <<|> q = Parser $ \input -> let r = runParse p input in if null r then runParse q input else r

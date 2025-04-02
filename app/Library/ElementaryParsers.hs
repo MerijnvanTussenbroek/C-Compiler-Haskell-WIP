@@ -5,9 +5,9 @@ import Data.Char
 newtype Parser input output = Parser { runParse :: [input] -> [(output,[input])] }
 
 anySymbol :: Parser s s
-anySymbol = Parser (\input -> case input of
+anySymbol = Parser $ \input -> case input of
         (x:xs) -> [(x,xs)]
-        [] -> [])
+        [] -> []
 
 satisfy :: (s -> Bool) -> Parser s s
 satisfy f = Parser $ \input -> case input of

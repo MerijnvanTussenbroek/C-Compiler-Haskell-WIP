@@ -25,6 +25,10 @@ data Token  = SpaceToken
             | WhileStatement
             | ForStatement
             | ReturnStatement
+            | IncludeStatement
+            | LibraryIdentifier String
+            | EnumToken
+            | StructToken
     deriving(Show, Eq)
 
 -- AST of C for the Parser
@@ -38,6 +42,7 @@ data Members    = MemberBlock [Members]
                 | MemberFunction VarType Identifier [Variable] Statements
                 | MemberEnum Enumerator
                 | MemberStruct Struct
+                | MemberInclude String
     deriving Show
 
 data Enumerator = Enum String [Expression]

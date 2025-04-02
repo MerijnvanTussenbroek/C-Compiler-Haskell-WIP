@@ -15,6 +15,9 @@ pMember :: Parser Token Members
 pMember =   pMemberStatement
             <|> pMemberDeclaration
             <|> pMemberFunction
+            -- <|> pMemberInclude
+            -- <|> pMemberEnum
+            -- <|> pMemberStruct
 
 pMemberBlock :: Parser Token Members
 pMemberBlock = MemberBlock <$> greedy1 pMember
@@ -31,6 +34,22 @@ pMemberFunction = MemberFunction
     <*> parseTokenName
     <*> pack (punc OpeningRoundBracket) (listOf pVar (punc Comma) <<|> succeed []) (punc ClosingRoundBracket)
     <*> pack (punc OpeningBracket) (pStatementBlock <<|> succeed (StatementBlock [])) (punc ClosingBracket)
+
+pMemberInclude :: Parser Token Members
+pMemberInclude = MemberInclude <$ punc IncludeStatement <*> pLibrary
+
+pMemberEnum :: Parser Token Members
+pMemberEnum = do
+    punc EnumToken
+    name <- parseTokenName
+    punc OpeningBracket
+    listOfExpr <- undefined -- (\a b -> a : b) <$> (e1 <*> many (punc Comma *> e1))
+    punc ClosingBracket
+    pSemi
+    return (MemberEnum (Enum name listOfExpr))
+
+pMemberStruct :: Parser Token Members
+pMemberStruct = undefined -- MemberStruct <$>
 
 pStatement :: Parser Token Statements
 pStatement =    pStatementExpression
@@ -216,4 +235,9 @@ pModifier = anySymbol >>= \xs -> case xs of
 pOperator :: Parser Token Operator
 pOperator = anySymbol >>= \xs -> case xs of
     Operator x -> return x
+    _ -> pure failp []
+
+pLibrary :: Parser Token String
+pLibrary = anySymbol >>= \xs -> case xs of
+    LibraryIdentifier x -> return x
     _ -> pure failp []

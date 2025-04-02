@@ -50,12 +50,18 @@ lexIdentifier :: Parser Char Token
 lexIdentifier = ((\a b -> Name (a:b)) <$> lower <*> greedy parseAnySymbol)
                 <<|> (Name . (: []) <$> lower)
 
+lexLibraryIdentifier :: Parser Char Token
+lexLibraryIdentifier = (\_ a _ -> LibraryIdentifier a) <$> symbol '<' <*> greedy (satisfy ( /= '>')) <*> symbol '>'
+
 lexStatementTokens :: Parser Char Token
 lexStatementTokens  = (IfStatement <$ token "if") 
                     <|> (ElseStatement <$ token "else") 
                     <|> (WhileStatement <$ token "while")
                     <|> (ForStatement <$ token "for")
                     <|> (ReturnStatement <$ token "return")
+                    <|> (IncludeStatement <$ token "#include")
+                    <|> (EnumToken <$ token "enum")
+                    <|> (StructToken <$ token "struct")
 
 lexIntVar :: Parser Char Token
 lexIntVar = IntegerVar <$> parseInteger
@@ -116,6 +122,7 @@ lexers =    [
             lexOpeningBracket,
             lexClosingBracket,
             lexPointerOperator,
+            lexLibraryIdentifier,
             lexOperator,
             lexComma,
             lexDoubleVar,
