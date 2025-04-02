@@ -6,10 +6,11 @@ import Library.Library
 import Library.ParserCombinators
 import Library.ElementaryParsers
 import Control.Applicative
+import Data.Char
 
 
 lexSpace :: Parser Char Token
-lexSpace = Space <$ greedy parseSpaces
+lexSpace = SpaceToken <$ greedy parseSpaces
 
 lexSingleLineComment :: Parser Char Token
 lexSingleLineComment = Comment <$ token "//" <* greedy (satisfy (/= '\n'))
@@ -97,8 +98,8 @@ lexOperator = Operator <$> foldOverOperators operatorList
 
 lexPointerOperator :: Parser Char Token
 lexPointerOperator = Parser $ \input -> case input of
-    ('*':x:xs)  | x == ' ' -> [(Operator Mul,xs)]
-                | otherwise -> [(Operator PointerOperator,x:xs)]
+    ('*':x:xs)  | isAlpha x -> [(Operator PointerOperator,x:xs)]
+                | otherwise -> [(Operator Mul, x:xs)]
     (_:xs) -> []
     [] -> []
 
@@ -128,7 +129,7 @@ lexers =    [
             ]
 
 filteringFunction :: Token -> Bool
-filteringFunction Space = False
+filteringFunction SpaceToken = False
 filteringFunction Comment = False
 filteringFunction _ = True
 

@@ -2,7 +2,7 @@ module AbstractSyntax where
 
 -- Tokens for the Lexer
 
-data Token  = Space
+data Token  = SpaceToken
             | Comment
             | Semicolon
             | OpeningBracket
@@ -36,7 +36,16 @@ data Members    = MemberBlock [Members]
                 | MemberDeclaration Variable 
                 | MemberStatement Statements
                 | MemberFunction VarType Identifier [Variable] Statements
+                | MemberEnum Enumerator
+                | MemberStruct Struct
     deriving Show
+
+data Enumerator = Enum String [Expression]
+    deriving Show
+
+data Struct = Struct String [Variable]
+    deriving Show
+
 
 data Statements     = StatementBlock [Statements] 
                     | StatementDeclaration Variable
@@ -66,6 +75,9 @@ data VarType    = Void
                 | CharType
                 | DoubleType
                 | PointerType VarType
+
+                | SelfDefined String --Enums
+                | StructType String --Structs
     deriving(Show, Eq)
 
 data Variable   = Var Modifier VarType Identifier
