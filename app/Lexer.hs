@@ -8,132 +8,105 @@ import Library.ElementaryParsers
 import Control.Applicative
 import Data.Char
 
-
 lexSpace :: Parser Char Token
 lexSpace = SpaceToken <$ greedy parseSpaces
 
-lexSingleLineComment :: Parser Char Token
-lexSingleLineComment = Comment <$ token "//" <* greedy (satisfy (/= '\n'))
+lexComment :: Parser Char Token
+lexComment =    (Comment <$ token "//" <* greedy (satisfy (/= '\n')))
+                <|>(Comment <$ token "/*" <* greedy (nottoken "*/") <* token "*/")
 
-lexSingleLineComment2 :: Parser Char Token
-lexSingleLineComment2 = Comment <$ token "//"
+lexKeyWords :: Parser Char Token
+lexKeyWords =   IfStatement <$ token "if"
+                <|> ElseStatement <$ token "else"
+                <|> WhileStatement <$ token "while"
+                <|> ForStatement <$ token "for"
+                <|> ReturnStatement <$ token "return"
+                <|> IncludeStatement <$ token "#include"
+                <|> EnumToken <$ token "enum"
+                <|> StructToken <$ token "struct"
+                <|> TypedefToken <$ token "typedef"
 
-lexMultiLineComment :: Parser Char Token
-lexMultiLineComment =   (Comment <$ token "/*" <* greedy (nottoken "*/") <* token "*/")
-                        <|> (Comment <$ token "/*" <* token "*/")
-
-lexSemicolon :: Parser Char Token
-lexSemicolon = Semicolon <$ symbol ';'
-
-lexClosingSquareBracket :: Parser Char Token
-lexClosingSquareBracket = ClosingSquareBracket <$ symbol ']'
-
-lexOpeningSquareBracket :: Parser Char Token
-lexOpeningSquareBracket = OpeningSquareBracket <$ symbol '['
-
-lexClosingRoundBracket :: Parser Char Token
-lexClosingRoundBracket = ClosingRoundBracket <$ symbol ')'
-
-lexOpeningRoundBracket :: Parser Char Token
-lexOpeningRoundBracket = OpeningRoundBracket <$ symbol '('
-
-lexOpeningBracket :: Parser Char Token
-lexOpeningBracket = OpeningBracket <$ symbol '{'
-
-lexClosingBracket :: Parser Char Token
-lexClosingBracket = ClosingBracket <$ symbol '}'
-
-lexComma :: Parser Char Token
-lexComma = Comma <$ symbol ','
-
-lexIdentifier :: Parser Char Token
-lexIdentifier = ((\a b -> Name (a:b)) <$> lower <*> greedy parseAnySymbol)
-                <<|> (Name . (: []) <$> lower)
-
-lexLibraryIdentifier :: Parser Char Token
-lexLibraryIdentifier = (\_ a _ -> LibraryIdentifier a) <$> symbol '<' <*> greedy (satisfy ( /= '>')) <*> symbol '>'
-
-lexStatementTokens :: Parser Char Token
-lexStatementTokens  = (IfStatement <$ token "if") 
-                    <|> (ElseStatement <$ token "else") 
-                    <|> (WhileStatement <$ token "while")
-                    <|> (ForStatement <$ token "for")
-                    <|> (ReturnStatement <$ token "return")
-                    <|> (IncludeStatement <$ token "#include")
-                    <|> (EnumToken <$ token "enum")
-                    <|> (StructToken <$ token "struct")
-
-lexIntVar :: Parser Char Token
-lexIntVar = IntegerVar <$> parseInteger
-
-lexDoubleVar :: Parser Char Token
-lexDoubleVar = DoubleVar <$> parseDouble
-
-lexCharVar :: Parser Char Token
-lexCharVar = Character <$> pack (symbol '\'') parseChar (symbol '\'')
+lexTypes :: Parser Char Token
+lexTypes =  Type Void <$ token "void"
+            <|> Type IntType <$ token "int"
+            <|> Type CharType <$ token "char"
+            <|> Type DoubleType <$ token "double"
 
 lexModifier :: Parser Char Token
-lexModifier =   (Modifier Static <$ token "static") 
-                <|> (Modifier Signed <$ token "signed") 
-                <|> (Modifier Unsigned <$ token "unsigned")
+lexModifier =   Modifier Static <$ token "static"
+                <|> Modifier Signed <$ token "signed"
+                <|> Modifier Unsigned <$ token "unsigned"
 
-lexPointerType :: Parser Char Token
-lexPointerType = (\(Type x) _ -> Type (PointerType x)) <$> lexType <*> symbol '*' 
+lexLibraryIdentifier :: Parser Char Token
+lexLibraryIdentifier =  Name <$ symbol '<' <*> greedy (satisfy (/= '>')) <* symbol '>'
 
-lexType :: Parser Char Token
-lexType =   (Type IntType <$ token "int") 
-            <|> (Type DoubleType <$ token "double") 
-            <|> (Type Void <$ token "void")
-            <|> (Type CharType <$ token "char")
+lexIdentifier :: Parser Char Token
+lexIdentifier =     (\a b -> Name (a:b)) 
+                    <$> satisfy firstLetterParserHelperFunc
+                    <*> greedy parseAnySymbol
 
-operatorList :: [(Operator, String)]
-operatorList =  [
-                (MinAssign,"-="),(AddAssign,"+="),(DivAssign,"/="),(MulAssign,"*="),(ModAssign,"%="),
-                (AndAssign,"&="),(OrAssign,"|="),(XorAssign,"^="),(EqualTo,"=="),(NotEqualTo,"!="),
-                (AddOne,"++"),(MinusOne,"--"), (AddressOperator,"&"),
-                (LessOrEqualTo,"<="),(GreaterOrEqualTo,">="),(LessThan,"<"),(GreaterThan,">"),
-                (AndOp,"&&"),(OrOp,"||"),(NotOp,"!"),
-                (Mul,"*"),(Add,"+"),(Min,"-"),(Div,"/"),(Mod,"%")
-                ]
-
-foldOverOperators :: [(Operator,String)] -> Parser Char Operator
-foldOverOperators = foldr ((<<|>) . (\(a,b) -> a <$ token b)) (Assign <$ token "=")
+operators :: [(Operator,String)]
+operators = [
+            (AddOne,"++"),(MinOne,"--"),
+            (EqualComp,"=="),(NotEqualComp,"!="),
+            (BitwiseOrAss,"|="),(BitwiseXorAss,"^="),(BitwiseAndAss,"&="),
+            (BitwiseLeftAss,"<<="),(BitwiseRightAss,">>="),
+            (ModAss,"%="),(DivAss,"/="),(MulAss,"*="),
+            (AddAss,"+="),(MinAss,"-="),
+            (LogicalOr,"||"),(LogicalAnd,"&&"),
+            (GreaterOrEqual,">="),(LessOrEqual,"<="),
+            (BitwiseLeft,"<<"),(BitwiseRight,">>"),
+            (Add,"+"),(Min,"-"),(Mul,"*"),(AddressOf,"&"),(Div,"/"),(Mod,"%"),
+            (LessThan,"<"),(GreaterThan,">"),(LogicalNot,"!"),(BitwiseNot,"~"),
+            (BitwiseAnd,"&"),(BitwiseOr,"|"),(BitwiseXor,"^")
+            ]
 
 lexOperator :: Parser Char Token
-lexOperator = Operator <$> foldOverOperators operatorList
+lexOperator = foldr (\(a,b) -> (Operator a <$ token b <<|>)) (Operator Assignment <$ token "=") operators
 
-lexPointerOperator :: Parser Char Token
-lexPointerOperator = Parser $ \input -> case input of
-    ('*':x:xs)  | isAlpha x -> [(Operator PointerOperator,x:xs)]
-                | otherwise -> [(Operator Mul, x:xs)]
-    (_:xs) -> []
-    [] -> []
+lexBrackets :: Parser Char Token
+lexBrackets =   OpeningBracket <$ symbol '{'
+                <|> ClosingBracket <$ symbol '}'
+                <|> OpeningSquareBracket <$ symbol '['
+                <|> ClosingSquareBracket <$ symbol ']'
+                <|> OpeningRoundBracket <$ symbol '('
+                <|> ClosingRoundBracket <$ symbol ')'
+
+lexSymbols :: Parser Char Token
+lexSymbols =    Semicolon <$ symbol ';'
+                <|> Comma <$ symbol ','
+                <|> Apostrofy <$ symbol '\''
+
+lexInteger :: Parser Char Token
+lexInteger = IntegerVar <$> parseInteger
+
+lexDouble :: Parser Char Token
+lexDouble = DoubleVar <$> parseDouble
+
+lexChar :: Parser Char Token
+lexChar = Character <$> pack (symbol '\'') (satisfy (/= '\'')) (symbol '\'')
+
+lexString :: Parser Char Token
+lexString = String <$> pack (symbol '\"') (greedy (satisfy (/= '\"'))) (symbol '\"')
 
 lexers :: [Parser Char Token]
 lexers =    [
-            lexSingleLineComment,
-            lexSingleLineComment2,
-            lexMultiLineComment,
-            lexSemicolon,
-            lexClosingSquareBracket,
-            lexOpeningSquareBracket,
-            lexClosingRoundBracket,
-            lexOpeningRoundBracket,
-            lexOpeningBracket,
-            lexClosingBracket,
-            lexPointerOperator,
-            lexLibraryIdentifier,
-            lexOperator,
-            lexComma,
-            lexDoubleVar,
-            lexIntVar,
-            lexCharVar,
+            lexComment,
+            lexKeyWords,
+            lexTypes,
             lexModifier,
-            lexPointerType,
-            lexType,
-            lexStatementTokens,
+            lexBrackets,
+            lexSymbols,
+            lexInteger,
+            lexDouble,
+            lexChar,
+            lexString,
+            lexOperator,
+            lexLibraryIdentifier,
             lexIdentifier
             ]
+
+
 
 filteringFunction :: Token -> Bool
 filteringFunction SpaceToken = False

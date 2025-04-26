@@ -74,7 +74,7 @@ executable C-compiler
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base >=4.17 && <4.18
+    build-depends:    base >=4.17 && <4.20
 
     -- Directories containing source files.
     hs-source-dirs:   app

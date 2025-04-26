@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Parser where
 import AbstractSyntax
 import Library.Library
@@ -5,239 +7,249 @@ import Library.ElementaryParsers
 import Library.ParserCombinators 
 import Control.Applicative
 
-parse :: Parser Token Program
-parse = pProgram <* eof
+p :: Token -> Parser Token Token
+p = symbol
+
+pSemi :: Parser Token Token
+pSemi = p Semicolon
+
+parser :: Parser Token Program
+parser = pProgram <* eof
 
 pProgram :: Parser Token Program
 pProgram = Program <$> pMemberBlock
 
-pMember :: Parser Token Members
-pMember =   pMemberStatement
-            <|> pMemberDeclaration
-            <|> pMemberFunction
-            -- <|> pMemberInclude
-            -- <|> pMemberEnum
-            -- <|> pMemberStruct
-
 pMemberBlock :: Parser Token Members
-pMemberBlock = MemberBlock <$> greedy1 pMember
+pMemberBlock = MemberBlock <$> greedy pMember
+
+pMember :: Parser Token Members
+pMember =   pMemberDeclaration
+            <|> pMemberStatement
+            <|> pMemberFunction
+            <|> pMemberEnum
+            <|> pMemberStruct
+            <|> pMemberInclude
+            <|> pMemberTypedef
 
 pMemberDeclaration :: Parser Token Members
-pMemberDeclaration = MemberDeclaration <$> pVar <* pSemi
+pMemberDeclaration = undefined
 
 pMemberStatement :: Parser Token Members
 pMemberStatement = MemberStatement <$> pStatementBlock
 
 pMemberFunction :: Parser Token Members
-pMemberFunction = MemberFunction 
-    <$> pType
-    <*> parseTokenName
-    <*> pack (punc OpeningRoundBracket) (listOf pVar (punc Comma) <<|> succeed []) (punc ClosingRoundBracket)
-    <*> pack (punc OpeningBracket) (pStatementBlock <<|> succeed (StatementBlock [])) (punc ClosingBracket)
-
-pMemberInclude :: Parser Token Members
-pMemberInclude = MemberInclude <$ punc IncludeStatement <*> pLibrary
+pMemberFunction = do
+    funcType <- pType
+    funcName <- parseTokenName
+    p OpeningRoundBracket
+    decls <- listOf pDeclaration (p Comma)
+    p ClosingRoundBracket
+    p OpeningBracket
+    body <- pStatementBlock
+    p ClosingBracket
+    return (MemberFunction funcType funcName decls body)
 
 pMemberEnum :: Parser Token Members
 pMemberEnum = do
-    punc EnumToken
-    name <- parseTokenName
-    punc OpeningBracket
-    listOfExpr <- undefined -- (\a b -> a : b) <$> (e1 <*> many (punc Comma *> e1))
-    punc ClosingBracket
-    pSemi
-    return (MemberEnum (Enum name listOfExpr))
+    p EnumToken
+    enumName <- parseTokenName
+    p OpeningBracket
+    enumDecls <- pEnumDecls
+    p ClosingBracket
+    return (MemberEnum (Enum enumName enumDecls))
+    
+
+pEnumDecls :: Parser Token [(Variable, Expression)]
+pEnumDecls = undefined
 
 pMemberStruct :: Parser Token Members
-pMemberStruct = undefined -- MemberStruct <$>
+pMemberStruct = undefined
 
-pStatement :: Parser Token Statements
-pStatement =    pStatementExpression
-                <|> pStatementDeclaration
-                <|> pStatementIfElse
-                <|> pStatementWhile
-                <|> pStatementFor
-                <|> pStatementReturn
+pMemberInclude :: Parser Token Members
+pMemberInclude = do
+    p IncludeStatement
+    name <- parseTokenName
+    return (MemberInclude name)
+
+pMemberTypedef :: Parser Token Members
+pMemberTypedef = undefined
 
 pStatementBlock :: Parser Token Statements
-pStatementBlock = StatementBlock <$> greedy1 pStatement
+pStatementBlock = StatementBlock <$> greedy pStatement
+
+pStatement :: Parser Token Statements
+pStatement =    pStatementDeclaration
+                <|> pStatementExpression
+                <|> pStatementReturn
+                <|> pStatementExpression
+                <|> pStatementIfElse
+                <|> pStatementWhile
 
 pStatementDeclaration :: Parser Token Statements
-pStatementDeclaration = (StatementDeclaration <$> pVar
-                        <|> ((\a b c (Operator d) e-> StatementBlock [StatementDeclaration (Var a b c), StatementExpression (BinaryExp d e (LitVar c))]) 
-                        <$> (pModifier <<|> succeed None)
-                        <*> pType
-                        <*> parseTokenName
-                        <*> symbol (Operator Assign)
-                        <*> e1)) <* pSemi
-
-pStatementDeclarationAndExpression :: Parser Token Statements
-pStatementDeclarationAndExpression = undefined
+pStatementDeclaration = undefined
 
 pStatementExpression :: Parser Token Statements
-pStatementExpression = StatementExpression <$> e1 <* pSemi
+pStatementExpression = do
+    exp <- pExpression
+    pSemi
+    return (StatementExpression exp)
 
 pStatementReturn :: Parser Token Statements
-pStatementReturn = StatementReturn <$> pack (punc ReturnStatement) e1 pSemi
+pStatementReturn = do
+    p ReturnStatement
+    exp <- pExpression
+    pSemi
+    return (StatementReturn exp)
 
 pStatementIfElse :: Parser Token Statements
 pStatementIfElse = do
-    punc IfStatement
-    exps <- bracketedExpressions
-    stats <- bracketedStatements
-    mElse <- maybeElse
-    return (StatementIfElse exps stats mElse)
+    p IfStatement
+    p OpeningRoundBracket
+    exp <- pExpression
+    p ClosingRoundBracket
+    p OpeningBracket
+    sta <- pStatementBlock
+    p ClosingBracket
+    elseSta <- elsePos <|> succeed (StatementBlock [])
+    return (StatementIfElse exp sta elseSta)
     where
-        maybeElse = (punc ElseStatement *> bracketedStatements)
-                    <|> succeed (StatementBlock [])
-
+        elsePos = do
+            p ElseStatement
+            p OpeningBracket
+            sta <- pStatementBlock
+            p ClosingBracket
+            return sta
 
 pStatementWhile :: Parser Token Statements
 pStatementWhile = do
-    punc WhileStatement
-    exps <- bracketedExpressions
-    stats <- bracketedStatements
-    return (StatementWhile exps stats)
+    p WhileStatement
+    p OpeningRoundBracket
+    exp <- pExpression
+    p ClosingBracket
+    p OpeningBracket
+    sta <- pStatementBlock
+    p ClosingBracket
+    return (StatementWhile exp sta)
 
---desugering for statements to while loops
-pStatementFor :: Parser Token Statements
-pStatementFor = do
-    punc ForStatement
-    punc OpeningRoundBracket
-    var <- pVar
-    punc Comma
-    exp1 <- e1
-    pSemi
-    exp2 <- e1
-    pSemi
-    exp3 <- e1
-    punc ClosingRoundBracket
-    stats <- pack (punc OpeningBracket) (pStatementBlock <<|> succeed (StatementBlock [])) (punc ClosingBracket)
-    return (StatementBlock [StatementDeclaration var, StatementWhile exp1 (StatementBlock [stats, StatementExpression exp3])])
-
+pDeclaration :: Parser Token Variable
+pDeclaration = undefined
 
 pExpression :: Parser Token Expression
-pExpression =   pLiteral
-                <|> pFuncCall
-                <|> bracketedExpressions
-                <|> pUnaryExpression
-                <|> pack (punc OpeningRoundBracket) pUnaryExpression (punc ClosingRoundBracket)
+pExpression =   (pBinaryExpression
+                <|> pLiteral
+                <|> pFunctionCall)
+                <<|> leftUnary unaryLeftOperators pAfterBinaryExpression
+                <<|> rightUnary unaryRightOperators pAfterBinaryExpression
 
-pUnaryExpression :: Parser Token Expression
-pUnaryExpression =  (UnaryExpression <$> pLiteral <*> pOperator)
-                    <|> (UnaryExpression2 <$> pOperator <*> pLiteral)
+pAfterBinaryExpression :: Parser Token Expression
+pAfterBinaryExpression =    (pLiteral
+                            <|> pFunctionCall)
+                            <<|> leftUnary unaryLeftOperators pAfterUnaryExpression
+                            <<|> rightUnary unaryRightOperators pAfterUnaryExpression
 
-genr :: [Operator] -> Parser Token Expression -> Parser Token Expression
-genr ops p = chainr p (choice (map f ops))
-    where
-        f s = (\(Operator x) -> BinaryExp x) <$> symbol (Operator s)
+pAfterUnaryExpression :: Parser Token Expression
+pAfterUnaryExpression = pLiteral
+                        <|> pFunctionCall
 
-genl :: [Operator] -> Parser Token Expression -> Parser Token Expression
-genl ops p = chainl p (choice (map f ops))
-    where 
-        f s = (\(Operator x) -> BinaryExp x) <$> symbol (Operator s)
+pFunctionCall :: Parser Token Expression
+pFunctionCall = do
+    name <- parseTokenName
+    p OpeningRoundBracket
+    exps <- listOf pExpression (p Comma)
+    p ClosingRoundBracket
+    return (FuncCall name exps)
+
+-- left associative = right to left
+-- right associative = left to right
+-- right to left means first parsing the right then left
+-- left to right means first parsing the left then the right
+
+unaryRightOperators :: [Operator]
+unaryRightOperators = [AddOne, MinOne, LogicalNot, BitwiseNot, Mul, AddressOf, Min]
+
+unaryLeftOperators :: [Operator]
+unaryLeftOperators = [AddOne, MinOne]
 
 rightAssociative :: [[Operator]]
-rightAssociative = [[Assign], [XorAssign, OrAssign], [AndAssign], [MinAssign, AddAssign], [ModAssign, DivAssign, MulAssign]]
-e1 :: Parser Token Expression
-e1 = foldr genr e2 rightAssociative
+rightAssociative =  [
+                    [LogicalOr],[LogicalAnd],
+                    [BitwiseOr],[BitwiseXor],[BitwiseAnd],
+                    [EqualComp, NotEqualComp],
+                    [GreaterThan, GreaterOrEqual, LessThan,LessOrEqual],
+                    [BitwiseLeft,BitwiseRight],
+                    [Add,Min],
+                    [Mul, Div, Mod]
+                    ]
 
-leftAssociative :: [[Operator]]
-leftAssociative = [[OrOp, XorOp],[AndOp],[NotEqualTo,EqualTo],[GreaterOrEqualTo,LessOrEqualTo],[GreaterThan,LessThan],[Min,Add],[Mod,Div,Mul]]
-e2 :: Parser Token Expression
-e2 = foldr genl pExpression leftAssociative
+leftAssociative :: [Operator]
+leftAssociative =   [Assignment
+                    , AddAss, MinAss
+                    , MulAss, DivAss, ModAss
+                    , BitwiseLeftAss, BitwiseRightAss
+                    , BitwiseAndAss, BitwiseXorAss, BitwiseOrAss
+                    ]
+
+leftGen :: [Operator] -> Parser Token Expression -> Parser Token Expression
+leftGen ops p = chainr p (choice (map(\op -> (\(Operator op) -> BinaryExp op) <$> symbol (Operator op)) ops)) 
+
+rightGen :: [Operator] -> Parser Token Expression -> Parser Token Expression
+rightGen ops p = chainl p (choice (map(\op -> (\(Operator op) -> BinaryExp op) <$> symbol (Operator op)) ops))
+
+leftUnary :: [Operator] -> Parser Token Expression -> Parser Token Expression
+leftUnary ops p = choice (map(\op -> (\(Operator op) exp -> UnaryExpression exp op) <$> symbol (Operator op) <*> p) ops)
+
+rightUnary :: [Operator] -> Parser Token Expression -> Parser Token Expression
+rightUnary ops p = choice (map(\op -> (\exp (Operator op) -> UnaryExpression2 op exp) <$> p <*> symbol (Operator op)) ops)
+
+pBinaryExpression :: Parser Token Expression
+pBinaryExpression = leftGen leftAssociative (foldr rightGen pAfterBinaryExpression rightAssociative)
 
 pLiteral :: Parser Token Expression
-pLiteral =  pLitInt 
-            <|> pLitVar
-            <|> pLitDouble 
-            <|> pLitChar 
-            <|> pLitArray
+pLiteral = litInt <|> litChar <|> litDouble <|> litVar
 
-pLitInt :: Parser Token Expression
-pLitInt = LitInt <$> parseTokenInt
+litInt :: Parser Token Expression
+litInt = LitInt <$> parseTokenInt
 
-pLitDouble :: Parser Token Expression
-pLitDouble = LitDouble <$> parseTokenDouble
+litChar :: Parser Token Expression
+litChar = LitChar <$> parseTokenChar
 
-pLitChar :: Parser Token Expression
-pLitChar = LitChar <$> parseTokenChar
+litDouble :: Parser Token Expression
+litDouble = LitDouble <$> parseTokenDouble
 
-pLitVar :: Parser Token Expression
-pLitVar = LitVar <$> parseTokenName
-
-pLitArray :: Parser Token Expression
-pLitArray = LitArray <$> parseTokenName <*> pack (punc OpeningSquareBracket) parseTokenInt (punc ClosingSquareBracket)
-
---The reason the pFuncCall function is so slow is the listOf e1 (punc Comma)
---after testing, I figured out it slows it down majorly
-pFuncCall :: Parser Token Expression
-pFuncCall = FuncCall <$> parseTokenName <*> pack (punc OpeningRoundBracket) (listOf e1 (punc Comma) <|> succeed []) (punc ClosingRoundBracket)
-
-pVar :: Parser Token Variable
-pVar = pNormalVar <|> pArrayVar
-
-pNormalVar :: Parser Token Variable
-pNormalVar = Var
-    <$> (pModifier <<|> succeed None)
-    <*> pType
-    <*> parseTokenName
-
--- I need to change the way arrays are parsed, it is not done correctly
-pArrayVar :: Parser Token Variable
-pArrayVar = ArrayVar
-    <$> (pModifier <<|> succeed None)
-    <*> pType
-    <*> parseTokenName
-    <*> pack (punc OpeningSquareBracket) parseTokenInt (punc ClosingSquareBracket)
-
-punc :: Token -> Parser Token Token
-punc = symbol 
-
-bracketedExpressions :: Parser Token Expression
-bracketedExpressions = pack (punc OpeningRoundBracket) e1 (punc ClosingRoundBracket)
-bracketedStatements :: Parser Token Statements
-bracketedStatements = pack (punc OpeningBracket) pStatementBlock (punc ClosingBracket)
-
-pSemi :: Parser Token Token
-pSemi = punc Semicolon
+litVar :: Parser Token Expression
+litVar = LitVar <$> parseTokenName
 
 parseTokenInt :: Parser Token Int
-parseTokenInt = anySymbol >>= \xs -> case xs of
+parseTokenInt = anySymbol >>= \case
     IntegerVar x -> return x
     _ -> pure failp []
 
 parseTokenDouble :: Parser Token Double
-parseTokenDouble = anySymbol >>= \xs -> case xs of
+parseTokenDouble = anySymbol >>= \case
     DoubleVar x -> return x
     _ -> pure failp []
 
 parseTokenChar :: Parser Token Char
-parseTokenChar = anySymbol >>= \xs -> case xs of
+parseTokenChar = anySymbol >>= \case
     Character x -> return x
     _ -> pure failp []
 
 parseTokenName :: Parser Token Identifier
-parseTokenName = anySymbol >>= \xs -> case xs of
+parseTokenName = anySymbol >>= \case
     Name x -> return x
     _ -> pure failp []
 
 pType :: Parser Token VarType
-pType = anySymbol >>= \xs -> case xs of
+pType = anySymbol >>= \case
     Type x -> return x
     _ -> pure failp []
 
 pModifier :: Parser Token Modifier
-pModifier = anySymbol >>= \xs -> case xs of
+pModifier = anySymbol >>= \case
     Modifier x -> return x
     _ -> pure failp []
 
 pOperator :: Parser Token Operator
-pOperator = anySymbol >>= \xs -> case xs of
+pOperator = anySymbol >>= \case
     Operator x -> return x
-    _ -> pure failp []
-
-pLibrary :: Parser Token String
-pLibrary = anySymbol >>= \xs -> case xs of
-    LibraryIdentifier x -> return x
     _ -> pure failp []

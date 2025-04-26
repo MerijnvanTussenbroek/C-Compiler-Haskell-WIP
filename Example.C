@@ -1,6 +1,5 @@
-int main()
-{
-    int y;
-
-    y = 7;
+int main(){
+    int x = 5;
+    int* z;
+    z = &x;
 }

@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 module AnalysisAlgebra where
 
 import AbstractSyntax
@@ -12,6 +13,7 @@ data AnalysisErrors = NoErrors
     deriving Eq
 
 instance Show AnalysisErrors where
+    show :: AnalysisErrors -> String
     show NoErrors = "No errors"
     show (ScopeError x) = "Scope error detected: " ++ x
     show (TypeError x) = "Type error detected: " ++ x
@@ -80,7 +82,6 @@ foldOverStatementWhile :: env -> exp -> s -> (s,env)
 foldOverStatementWhile = undefined
 
 foldOverBinaryExpr :: env -> Operator -> exp -> exp -> (exp,env)
-foldOverBinaryExpr env Assign e1 e2 = undefined
 foldOverBinaryExpr env op e1 e2 = undefined
 
 foldOverUnaryExpr :: env -> exp -> Operator -> (exp,env)

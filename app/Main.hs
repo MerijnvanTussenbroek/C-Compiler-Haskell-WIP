@@ -18,22 +18,12 @@ main = do
     input <- readFile filepath
     --putStrLn "1: compile to assembly 2: Visualize 3: evaluate"
     --mode <- getLine
-    print "Begin lexing"
-    putStrLn "\n"
+    putStrLn "Begin lexing\n"
     let x = run lexer input
     print x
-    putStrLn "\n"
-    print "Finished lexing, beginning parsing"
-    putStrLn "\n"
-    let z = run parse x
-    print z
-    putStrLn "\n"
-    print "Finishes parsing, begin desugaring"
-    putStrLn "\n"
-    let (a,b) = desugerar z
-    print a
-    putStrLn "\n"
-    print "desugaring done, no problems found"
+    putStrLn "\nBegin Parsing\n"
+    let y = run parser x
+    print y
     
 run :: Parser s a -> [s] -> a
 run parser input = getbestparse x (fst (head x))

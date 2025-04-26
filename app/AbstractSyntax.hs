@@ -26,9 +26,10 @@ data Token  = SpaceToken
             | ForStatement
             | ReturnStatement
             | IncludeStatement
-            | LibraryIdentifier String
+            | String String
             | EnumToken
             | StructToken
+            | TypedefToken
     deriving(Show, Eq)
 
 -- AST of C for the Parser
@@ -43,12 +44,19 @@ data Members    = MemberBlock [Members]
                 | MemberEnum Enumerator
                 | MemberStruct Struct
                 | MemberInclude String
+                | MemberTypedef TypeDef
     deriving Show
 
-data Enumerator = Enum String [Expression]
+data Enumerator = Enum Identifier [(Variable, Expression)]
     deriving Show
 
-data Struct = Struct String [Variable]
+data Struct = Struct Identifier [Variable]
+    deriving Show
+
+data TypeDef =  Def1
+                | Def2
+                | Def3
+                | Def4
     deriving Show
 
 
@@ -81,8 +89,9 @@ data VarType    = Void
                 | DoubleType
                 | PointerType VarType
 
-                | SelfDefined String --Enums
+                | EnumType String --Enums
                 | StructType String --Structs
+                | TypedefType String -- Typedefs
     deriving(Show, Eq)
 
 data Variable   = Var Modifier VarType Identifier
@@ -96,40 +105,45 @@ data Modifier   = None
                 | Unsigned
     deriving(Show, Eq)
 
-data Operator   = Mul
+-- https://en.cppreference.com/w/c/language/operator_precedence
+data Operator   = AddOne
+                | MinOne
+                | UnaryPlus
+                | UnaryMinus
+                | LogicalNot
+                | BitwiseNot
+                | Indirection -- pointer *
+                | AddressOf -- variablee &
+                | Mul
                 | Div
                 | Mod
                 | Add
                 | Min
-
-                | AndOp
-                | OrOp
-                | NotOp
-                | XorOp
-
+                | BitwiseLeft
+                | BitwiseRight
                 | LessThan
-                | LessOrEqualTo
+                | LessOrEqual
                 | GreaterThan
-                | GreaterOrEqualTo
-                | EqualTo
-                | NotEqualTo
-
-                | Assign
-                | MulAssign
-                | DivAssign
-                | ModAssign
-                | AddAssign
-                | MinAssign
-                | AndAssign
-                | OrAssign
-                | XorAssign
-
-                | AddOne
-                | MinusOne
-                | NotOperator
-
-                | AddressOperator -- &
-                | PointerOperator -- *
+                | GreaterOrEqual
+                | EqualComp
+                | NotEqualComp
+                | BitwiseAnd
+                | BitwiseXor
+                | BitwiseOr
+                | LogicalAnd
+                | LogicalOr
+                | Assignment
+                | AddAss
+                | MinAss
+                | MulAss
+                | DivAss
+                | ModAss
+                | BitwiseLeftAss
+                | BitwiseRightAss
+                | BitwiseAndAss
+                | BitwiseXorAss
+                | BitwiseOrAss
+                | NegativeOperator
     deriving(Show, Eq)
                 
 type Identifier = String;

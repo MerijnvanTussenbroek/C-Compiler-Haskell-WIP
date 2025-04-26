@@ -23,6 +23,15 @@ capital = satisfy isUpper
 lower :: Parser Char Char
 lower = satisfy isLower
 
+parseFirstLetter :: Parser Char Char
+parseFirstLetter = satisfy firstLetterParserHelperFunc
+
+firstLetterParserHelperFunc :: Char -> Bool
+firstLetterParserHelperFunc x   | isLower x = True
+                                | isUpper x = True
+                                | x == '_' = True
+                                | otherwise = False
+
 natural :: Parser Char Int
 natural = foldl f 0 <$> greedy1 digit
     where f a b = 10 * a + b
@@ -31,18 +40,6 @@ parseInteger :: Parser Char Int
 parseInteger = (\a b -> if a == '-' then -b else b) 
     <$> (satisfy (== '-') <|> succeed ' ') 
     <*> natural
-
-{- 
-digit  :: Parser Char Char
-digit  =  satisfy Char.isDigit
-
-newdigit :: Parser Char Int
-newdigit = read . (:[]) <$> digit
-
-natural :: Parser Char Int
-natural = foldl (\a b -> a * 10 + b) 0 <$> many1 newdigit
-
--}
 
 parseDouble :: Parser Char Double
 parseDouble = (\a b _ d -> if a == '-' then -(f b d) else f b d ) 
@@ -75,10 +72,7 @@ greedy1 :: Parser s b -> Parser s [b]
 greedy1 p = (:) <$> p <*> greedy p 
 
 listOf :: Parser s a -> Parser s b -> Parser s [a]
-listOf p q = ((:) <$> p <*> greedy1 ((\_ a -> a) <$> q <*> p)) <|> ((: []) <$> p)
-
-parsingList :: Parser s a -> Parser s b -> Parser s c -> Parser s d -> Parser s [d]
-parsingList openSymbol closingSymbol seperator listItem = pack openSymbol (listOf listItem seperator) closingSymbol
+listOf p q = (:) <$> p <*> greedy ((\_ a -> a) <$> q <*> p)
 
 chainr :: Parser s a -> Parser s (a -> a -> a) -> Parser s a
 chainr p q = output <$> many (middleparser <$> p <*> q) <*> p
@@ -86,12 +80,12 @@ chainr p q = output <$> many (middleparser <$> p <*> q) <*> p
     middleparser :: a -> (a -> a -> a) -> (a -> a)
     middleparser x op = (x `op`)
     output :: [a -> a] -> a -> a
-    output a xs = foldr ($) xs a
+    output = flip (foldr ($))
 
 chainl :: Parser s a -> Parser s (a -> a -> a) -> Parser s a
 chainl p q = output <$> p <*> many (middleparser <$> q <*> p)
     where
         output :: a -> [a -> a] -> a
-        output a xs = foldl (flip ($)) a xs
+        output= foldl (flip ($))
         middleparser :: (a -> a -> a) -> a -> (a -> a)
         middleparser op x = (`op` x)
