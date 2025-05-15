@@ -7,6 +7,7 @@ import Library.ElementaryParsers
 import Library.ParserCombinators 
 import Control.Applicative
 
+
 p :: Token -> Parser Token Token
 p = symbol
 
@@ -24,7 +25,6 @@ pMemberBlock = MemberBlock <$> greedy pMember
 
 pMember :: Parser Token Members
 pMember =   pMemberDeclaration
-            <|> pMemberStatement
             <|> pMemberFunction
             <|> pMemberEnum
             <|> pMemberStruct
@@ -32,22 +32,26 @@ pMember =   pMemberDeclaration
             <|> pMemberTypedef
 
 pMemberDeclaration :: Parser Token Members
-pMemberDeclaration = undefined
-
-pMemberStatement :: Parser Token Members
-pMemberStatement = MemberStatement <$> pStatementBlock
+pMemberDeclaration = (\(mod, vartype, exps) -> foldOverExpression mod vartype exps []) <$> pDeclaration <* pSemi
 
 pMemberFunction :: Parser Token Members
 pMemberFunction = do
-    funcType <- pType
+    funcType <- parseType <|> (SelfDefined <$> parseTokenName)
     funcName <- parseTokenName
     p OpeningRoundBracket
-    decls <- listOf pDeclaration (p Comma)
+    decls <- listOf pFuncDeclaration (p Comma) <<|> succeed []
     p ClosingRoundBracket
     p OpeningBracket
     body <- pStatementBlock
     p ClosingBracket
     return (MemberFunction funcType funcName decls body)
+
+pFuncDeclaration :: Parser Token Variable
+pFuncDeclaration = do
+    mod <- litModifier
+    vartype <- (parseType <|> (SelfDefined <$> parseTokenName))
+    name <- parseTokenName
+    return (Var mod vartype name)
 
 pMemberEnum :: Parser Token Members
 pMemberEnum = do
@@ -56,23 +60,39 @@ pMemberEnum = do
     p OpeningBracket
     enumDecls <- pEnumDecls
     p ClosingBracket
+    pSemi
     return (MemberEnum (Enum enumName enumDecls))
     
 
-pEnumDecls :: Parser Token [(Variable, Expression)]
-pEnumDecls = undefined
+pEnumDecls :: Parser Token Statements
+pEnumDecls = StatementBlock <$> listOf (StatementExpression <$> pBinaryExpression pLiteral) (p Comma)
 
 pMemberStruct :: Parser Token Members
-pMemberStruct = undefined
+pMemberStruct = do
+    p StructToken
+    structName <- parseTokenName
+    p OpeningBracket
+    exps <- greedy (pStructDecls <* pSemi)
+    p ClosingBracket
+    pSemi
+    return (MemberStruct (Struct structName exps))
+
+pStructDecls :: Parser Token Variable
+pStructDecls = do
+    mod <- litModifier
+    vartype <- parseType <|> (SelfDefined <$> parseTokenName)
+    name <- parseTokenName
+    return (Var mod vartype name)
 
 pMemberInclude :: Parser Token Members
 pMemberInclude = do
     p IncludeStatement
-    name <- parseTokenName
-    return (MemberInclude name)
+    MemberInclude <$> (parseTokenName <|> pString)
 
 pMemberTypedef :: Parser Token Members
-pMemberTypedef = undefined
+pMemberTypedef = 
+    (\_ a b c -> MemberTypedef (Def2 a b c)) <$> p TypedefToken <*> litModifier <*> parseType <*> parseTokenName <* pSemi
+    
 
 pStatementBlock :: Parser Token Statements
 pStatementBlock = StatementBlock <$> greedy pStatement
@@ -84,9 +104,7 @@ pStatement =    pStatementDeclaration
                 <|> pStatementExpression
                 <|> pStatementIfElse
                 <|> pStatementWhile
-
-pStatementDeclaration :: Parser Token Statements
-pStatementDeclaration = undefined
+                <|> pStatementFor
 
 pStatementExpression :: Parser Token Statements
 pStatementExpression = do
@@ -120,42 +138,83 @@ pStatementIfElse = do
             p ClosingBracket
             return sta
 
+pStatementDeclaration :: Parser Token Statements
+pStatementDeclaration = (\(mod, vartype, exps) -> foldOverExpression2 mod vartype exps []) <$> pDeclaration <* pSemi
+
 pStatementWhile :: Parser Token Statements
 pStatementWhile = do
     p WhileStatement
     p OpeningRoundBracket
     exp <- pExpression
-    p ClosingBracket
+    p ClosingRoundBracket
     p OpeningBracket
     sta <- pStatementBlock
     p ClosingBracket
     return (StatementWhile exp sta)
 
-pDeclaration :: Parser Token Variable
-pDeclaration = undefined
+pStatementFor :: Parser Token Statements
+pStatementFor = do
+    p ForStatement
+    p OpeningRoundBracket
+    decls <- (: []) <$> pDeclaration <|> listOf pDeclaration (p Comma)
+    pSemi
+    exp1 <- pExpression
+    pSemi
+    exp2 <- (: []) <$> pExpression <|> listOf pExpression (p Comma)
+    p ClosingRoundBracket
+    p OpeningBracket
+    body <- pStatementBlock
+    p ClosingBracket
+    return (StatementBlock [StatementBlock(forFolder2 decls), StatementWhile exp1 (StatementBlock [body,StatementBlock (forFolder1 exp2)])])
+
+forFolder1 :: [Expression] -> [Statements]
+forFolder1 = foldr ((:) . StatementExpression) []
+
+forFolder2 :: [(Modifier, VarType, [Expression])] -> [Statements]
+forFolder2 = foldr ((:) . (\(mod, vartype, exp) -> foldOverExpression2 mod vartype exp [])) []
+
+pDeclaration :: Parser Token (Modifier, VarType, [Expression])
+pDeclaration = do
+    mod <- litModifier
+    vartype <-  parseType <|> (SelfDefined <$> parseTokenName)
+    exps <- listOf (pBinaryExpression pAfterBinaryExpression) (p Comma)
+    return (mod, vartype, exps)
+
+foldOverExpression :: Modifier -> VarType -> [Expression] -> [Members] -> Members
+foldOverExpression mod var (alg@(BinaryExp Assignment (LitVar x) e2):xs) s = foldOverExpression mod var xs (MemberBlock[MemberDeclaration (Var mod var x), MemberStatement (StatementExpression alg)]:s)
+foldOverExpression mod var (alg@(LitVar x):xs) s = foldOverExpression mod var xs (MemberDeclaration (Var mod var x):s)
+foldOverExpression mod var (alg@(BinaryExp Assignment (UnaryExpression (LitVar x) Mul) e1):xs) s = undefined
+foldOverExpression mod var [] s = MemberBlock (reverse s)
+
+foldOverExpression2 :: Modifier -> VarType -> [Expression] -> [Statements] -> Statements
+foldOverExpression2 mod var (alg@(BinaryExp Assignment (LitVar x) e2):xs) s = foldOverExpression2 mod var xs (StatementBlock [StatementDeclaration (Var mod var x), StatementExpression alg]:s)
+foldOverExpression2 mod var (alg@(LitVar x):xs) s = foldOverExpression2 mod var xs (StatementDeclaration (Var mod var x):s)
+foldOverExpression2 mod var [] s = StatementBlock (reverse s)
 
 pExpression :: Parser Token Expression
-pExpression =   (pBinaryExpression
+pExpression =   (pBinaryExpression pAfterBinaryExpression
                 <|> pLiteral
                 <|> pFunctionCall)
-                <<|> leftUnary unaryLeftOperators pAfterBinaryExpression
-                <<|> rightUnary unaryRightOperators pAfterBinaryExpression
+                <|> rightUnary unaryLeftOperators pAfterBinaryExpression
+                <|> leftUnary unaryRightOperators pAfterBinaryExpression
 
 pAfterBinaryExpression :: Parser Token Expression
 pAfterBinaryExpression =    (pLiteral
                             <|> pFunctionCall)
-                            <<|> leftUnary unaryLeftOperators pAfterUnaryExpression
-                            <<|> rightUnary unaryRightOperators pAfterUnaryExpression
+                            <|> rightUnary unaryLeftOperators pAfterUnaryExpression
+                            <|> leftUnary unaryRightOperators pAfterUnaryExpression
+                            <|> pack (p OpeningRoundBracket) pExpression (p ClosingRoundBracket)
 
 pAfterUnaryExpression :: Parser Token Expression
-pAfterUnaryExpression = pLiteral
-                        <|> pFunctionCall
+pAfterUnaryExpression = (pLiteral
+                        <|> pFunctionCall)
+                        <|> pack (p OpeningRoundBracket) pExpression (p ClosingRoundBracket)
 
 pFunctionCall :: Parser Token Expression
 pFunctionCall = do
     name <- parseTokenName
     p OpeningRoundBracket
-    exps <- listOf pExpression (p Comma)
+    exps <- listOf pExpression (p Comma) <<|> succeed []
     p ClosingRoundBracket
     return (FuncCall name exps)
 
@@ -186,7 +245,8 @@ leftAssociative =   [Assignment
                     , AddAss, MinAss
                     , MulAss, DivAss, ModAss
                     , BitwiseLeftAss, BitwiseRightAss
-                    , BitwiseAndAss, BitwiseXorAss, BitwiseOrAss
+                    , BitwiseAndAss, BitwiseXorAss, BitwiseOrAss,
+                    StructElement
                     ]
 
 leftGen :: [Operator] -> Parser Token Expression -> Parser Token Expression
@@ -201,8 +261,8 @@ leftUnary ops p = choice (map(\op -> (\(Operator op) exp -> UnaryExpression exp 
 rightUnary :: [Operator] -> Parser Token Expression -> Parser Token Expression
 rightUnary ops p = choice (map(\op -> (\exp (Operator op) -> UnaryExpression2 op exp) <$> p <*> symbol (Operator op)) ops)
 
-pBinaryExpression :: Parser Token Expression
-pBinaryExpression = leftGen leftAssociative (foldr rightGen pAfterBinaryExpression rightAssociative)
+pBinaryExpression :: Parser Token Expression -> Parser Token Expression
+pBinaryExpression pAfter = leftGen leftAssociative (foldr rightGen pAfter rightAssociative)
 
 pLiteral :: Parser Token Expression
 pLiteral = litInt <|> litChar <|> litDouble <|> litVar
@@ -218,6 +278,18 @@ litDouble = LitDouble <$> parseTokenDouble
 
 litVar :: Parser Token Expression
 litVar = LitVar <$> parseTokenName
+
+litModifier :: Parser Token Modifier
+litModifier = pModifier <<|> succeed None
+
+parseType :: Parser Token VarType
+parseType = 
+    pType
+    <|> (definePointer <$> pType <*> greedy (p (Operator Mul)))
+
+definePointer :: VarType -> [Token] -> VarType
+definePointer vartype (x:xs) = PointerType (definePointer vartype xs)
+definePointer vartype [] = vartype
 
 parseTokenInt :: Parser Token Int
 parseTokenInt = anySymbol >>= \case
@@ -252,4 +324,9 @@ pModifier = anySymbol >>= \case
 pOperator :: Parser Token Operator
 pOperator = anySymbol >>= \case
     Operator x -> return x
+    _ -> pure failp []
+
+pString :: Parser Token String
+pString = anySymbol >>= \case
+    String x -> return x
     _ -> pure failp []

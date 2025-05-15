@@ -58,7 +58,8 @@ operators = [
             (BitwiseLeft,"<<"),(BitwiseRight,">>"),
             (Add,"+"),(Min,"-"),(Mul,"*"),(AddressOf,"&"),(Div,"/"),(Mod,"%"),
             (LessThan,"<"),(GreaterThan,">"),(LogicalNot,"!"),(BitwiseNot,"~"),
-            (BitwiseAnd,"&"),(BitwiseOr,"|"),(BitwiseXor,"^")
+            (BitwiseAnd,"&"),(BitwiseOr,"|"),(BitwiseXor,"^"),
+            (StructElement, ".")
             ]
 
 lexOperator :: Parser Char Token
@@ -94,6 +95,7 @@ lexers =    [
             lexComment,
             lexKeyWords,
             lexTypes,
+            lexLibraryIdentifier,
             lexModifier,
             lexBrackets,
             lexSymbols,
@@ -102,7 +104,6 @@ lexers =    [
             lexChar,
             lexString,
             lexOperator,
-            lexLibraryIdentifier,
             lexIdentifier
             ]
 

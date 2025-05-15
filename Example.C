@@ -1,5 +1,7 @@
-int main(){
-    int x = 5;
-    int* z;
-    z = &x;
+
+typedef unsigned char byte; 
+
+int main()
+{
+
 }

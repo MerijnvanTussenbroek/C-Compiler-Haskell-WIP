@@ -47,16 +47,15 @@ data Members    = MemberBlock [Members]
                 | MemberTypedef TypeDef
     deriving Show
 
-data Enumerator = Enum Identifier [(Variable, Expression)]
+data Enumerator = Enum Identifier Statements
     deriving Show
 
 data Struct = Struct Identifier [Variable]
     deriving Show
 
-data TypeDef =  Def1
-                | Def2
-                | Def3
-                | Def4
+data TypeDef =  Def1 Struct Identifier
+                | Def2 Modifier VarType Identifier
+                | Def3 Enumerator Identifier
     deriving Show
 
 
@@ -89,14 +88,13 @@ data VarType    = Void
                 | DoubleType
                 | PointerType VarType
 
-                | EnumType String --Enums
-                | StructType String --Structs
-                | TypedefType String -- Typedefs
+                | SelfDefined Identifier
     deriving(Show, Eq)
 
 data Variable   = Var Modifier VarType Identifier
                 | ArrayVar Modifier VarType Identifier Int
-                --the int is the length of the array
+                | EnumVar VarType Identifier
+                | StructVar VarType Identifier
     deriving Show
 
 data Modifier   = None 
@@ -144,6 +142,8 @@ data Operator   = AddOne
                 | BitwiseXorAss
                 | BitwiseOrAss
                 | NegativeOperator
+
+                | StructElement
     deriving(Show, Eq)
                 
 type Identifier = String;
