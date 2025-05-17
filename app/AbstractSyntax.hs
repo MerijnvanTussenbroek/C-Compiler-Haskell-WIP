@@ -48,9 +48,11 @@ data Members    = MemberBlock [Members]
     deriving Show
 
 data Enumerator = Enum Identifier Statements
+                | EnumTypedef Identifier
     deriving Show
 
 data Struct = Struct Identifier [Variable]
+                | StructTypedef Identifier
     deriving Show
 
 data TypeDef =  Def1 Struct Identifier
@@ -74,9 +76,9 @@ data Expression     = BinaryExp Operator Expression Expression
                     | LitInt Int 
                     | LitChar Char 
                     | LitDouble Double
-                    | LitVar String
-                    | LitPointer VarType String
-                    | LitArray String Int
+                    | LitVar Identifier
+                    | LitPointer VarType Identifier
+                    | LitArray Identifier Int
                     -- put() and printf() need to be hardcoded into the compiler, both print a string
                     -- scanf() asks for input
                     -- basic math functions also need to be hard coded in (think sin, cos , tan, etc)

@@ -65,7 +65,7 @@ pMemberEnum = do
     
 
 pEnumDecls :: Parser Token Statements
-pEnumDecls = StatementBlock <$> listOf (StatementExpression <$> pBinaryExpression pLiteral) (p Comma)
+pEnumDecls = StatementBlock . reverse <$> listOf (StatementExpression <$> pBinaryExpression pLiteral) (p Comma)
 
 pMemberStruct :: Parser Token Members
 pMemberStruct = do
@@ -91,7 +91,31 @@ pMemberInclude = do
 
 pMemberTypedef :: Parser Token Members
 pMemberTypedef = 
-    (\_ a b c -> MemberTypedef (Def2 a b c)) <$> p TypedefToken <*> litModifier <*> parseType <*> parseTokenName <* pSemi
+    ((\_ a b c -> MemberTypedef (Def2 a b c)) <$> p TypedefToken <*> litModifier <*> parseType <*> parseTokenName <* pSemi) 
+    <|> pMemberTypedefStruct
+    <|> pMemberTypedefEnum
+
+pMemberTypedefStruct :: Parser Token Members
+pMemberTypedefStruct = do
+    p TypedefToken
+    p StructToken
+    p OpeningBracket
+    exps <- greedy (pStructDecls <* pSemi)
+    p ClosingBracket
+    structName <- parseTokenName
+    pSemi
+    return (MemberTypedef (Def1 (Struct structName exps) structName))
+
+pMemberTypedefEnum :: Parser Token Members
+pMemberTypedefEnum = do
+    p TypedefToken
+    p EnumToken
+    p OpeningBracket
+    exps <- pEnumDecls
+    p ClosingBracket
+    enumName <- parseTokenName
+    pSemi
+    return (MemberTypedef(Def3 (Enum enumName exps) enumName))
     
 
 pStatementBlock :: Parser Token Statements
@@ -156,11 +180,11 @@ pStatementFor :: Parser Token Statements
 pStatementFor = do
     p ForStatement
     p OpeningRoundBracket
-    decls <- (: []) <$> pDeclaration <|> listOf pDeclaration (p Comma)
+    decls <- listOf pDeclaration (p Comma)
     pSemi
     exp1 <- pExpression
     pSemi
-    exp2 <- (: []) <$> pExpression <|> listOf pExpression (p Comma)
+    exp2 <- listOf pExpression (p Comma)
     p ClosingRoundBracket
     p OpeningBracket
     body <- pStatementBlock

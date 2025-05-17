@@ -67,9 +67,7 @@ executable C-compiler
         Desugering,
         Library.AssemblyLanguageAST,
         CodeGen,
-        Library.EnvironmentLibrary,
-        Evaluator,
-        Visualiser
+        Library.EnvironmentLibrary
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 

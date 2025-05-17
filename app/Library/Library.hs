@@ -72,7 +72,7 @@ greedy1 :: Parser s b -> Parser s [b]
 greedy1 p = (:) <$> p <*> greedy p 
 
 listOf :: Parser s a -> Parser s b -> Parser s [a]
-listOf p q = (:) <$> p <*> greedy ((\_ a -> a) <$> q <*> p)
+listOf p q = (:) <$> p <*> greedy ((\_ a -> a) <$> q <*> p) <<|> (: []) <$> p
 
 chainr :: Parser s a -> Parser s (a -> a -> a) -> Parser s a
 chainr p q = output <$> many (middleparser <$> p <*> q) <*> p
