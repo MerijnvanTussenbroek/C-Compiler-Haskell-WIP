@@ -21,6 +21,10 @@ addTypeDef (DesEnv x typedefList y z) typedef = DesEnv x (typedef:typedefList) y
 addVariable :: DesEnv -> (Identifier, Int, Modifier, VarType) -> DesEnv
 addVariable (DesEnv x y varList z) var = DesEnv x y (var:varList) z
 
+-- checker environment
+
+
+
 -- code gen environment
 
 data CodeEnd = CodeEnv 

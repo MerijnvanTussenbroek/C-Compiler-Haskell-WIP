@@ -9,6 +9,8 @@ import Algebra
 import AnalysisAlgebra 
 import Desugering
 import AbstractSyntax
+import Library.VMAssemblyLangAST 
+import CodeGen
 
 main :: IO ()
 main = do
@@ -28,6 +30,11 @@ main = do
     putStrLn"\nBegin Desugaring\n"
     let (env, ast) = desugerar z
     print ast
+    putStrLn "\nBegin compiling\n"
+    let (a,b) = compiler ast
+    let c = addHALT False b
+    let d = prettyPrinter c
+    putStrLn d
     -- we skip the checkers for now, as we do with the desugerar, we will only use correct programs for now
     
 run :: Parser s a -> [s] -> a
@@ -39,14 +46,23 @@ run parser input = getbestparse x (fst (head x))
 
 
 --We use this function to reorder elements and temporarily discard them
+
+-- I need to fix it as this reverses things
 reorder :: Program -> [Members] -> [Members] -> [Members] -> [Members] -> Program
-reorder (Program (MemberBlock ((MemberBlock x):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (MemberBlock x:gl) fu  
-reorder (Program (MemberBlock ((MemberDeclaration var):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (MemberDeclaration var:gl) fu 
-reorder (Program (MemberBlock ((MemberStatement stat):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (MemberStatement stat:gl) fu 
-reorder (Program (MemberBlock ((MemberFunction vart id vars stats):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl (MemberFunction vart id vars stats:fu)  
-reorder (Program (MemberBlock ((MemberEnum enum):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) (MemberEnum enum:en) ty gl fu 
+reorder (Program (MemberBlock ((MemberBlock x):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (gl++[MemberBlock x]) fu  
+reorder (Program (MemberBlock ((MemberDeclaration var):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (gl++[MemberDeclaration var]) fu 
+reorder (Program (MemberBlock ((MemberStatement stat):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty (gl++[MemberStatement stat]) fu 
+reorder (Program (MemberBlock ((MemberFunction vart id vars stats):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl (fu++[MemberFunction vart id vars stats])  
+reorder (Program (MemberBlock ((MemberEnum enum):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) (en++[MemberEnum enum]) ty gl fu 
 reorder (Program (MemberBlock ((MemberStruct str):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
 reorder (Program (MemberBlock ((MemberInclude id):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
 reorder (Program (MemberBlock ((MemberTypedef typdef):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
 reorder (Program (MemberBlock [])) en ty gl fu = Program (MemberBlock (en++ty++gl++fu)) 
 reorder (Program x) _ _ _ _ = Program x
+
+addHALT :: Bool -> Prog -> Prog
+addHALT _ ((LABEL "main"):xs) = LABEL "main" : addHALT True xs
+addHALT True ((PUSH 0):RET:xs) = HALT : addHALT False xs
+addHALT False (x:xs) = x : addHALT False xs
+addHALT y (x:xs) = x : addHALT y xs
+addHALT _ [] = []

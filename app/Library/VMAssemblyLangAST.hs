@@ -23,31 +23,34 @@ data Opcodes =  DEFINE Ident
                 | DIV
                 | READ_REG Value
                 | LOAD_REG Value
-                | LABEL Ident [Ident]
+                | LABEL Ident
                 | JUMP1 Ident
                 | JUMP2 Value
                 | RET
                 | BEGIN
+                | NOTHING
                 | HALT
 
 
-type Code = Opcodes
+type Code = [Opcodes]
 
 prettyPrinter :: Code -> String
-prettyPrinter (DEFINE id) = "DEFINE " ++ show id
-prettyPrinter (SET id) = "SET " ++ show id
-prettyPrinter (LOAD id) = "LOAD " ++ show id
-prettyPrinter (PUSH val) = "PUSH " ++ show val
-prettyPrinter READ = "READ"
-prettyPrinter POP = "POP"
-prettyPrinter ADD = "ADD"
-prettyPrinter SUB = "SUB"
-prettyPrinter MUL = "MUL"
-prettyPrinter DIV = "DIV"
-prettyPrinter (READ_REG val) = "READ_REG " ++ show val
-prettyPrinter (LOAD_REG val) = "LOAD_REG" ++ show val
-prettyPrinter (LABEL id ids) = "LABEL " ++ show id ++ foldr (\x -> (++ " " ++ show x)) "" ids
-prettyPrinter (JUMP1 id) = "JUMP " ++ show id
-prettyPrinter (JUMP2 val) = "JUMP " ++ show val
-prettyPrinter BEGIN = "BEGIN"
-prettyPrinter HALT = "HALT"
+prettyPrinter ((DEFINE id):xs) = "DEFINE " ++ id ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((SET id):xs) = "SET " ++ id ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((LOAD id):xs) = "LOAD " ++ id ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((PUSH val):xs) = "PUSH " ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter (READ:xs) = "READ" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (POP:xs) = "POP" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (ADD:xs) = "ADD" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (SUB:xs) = "SUB" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (MUL:xs) = "MUL" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (DIV:xs) = "DIV" ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((READ_REG val):xs) = "READ_REG " ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((LOAD_REG val):xs) = "LOAD_REG" ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((LABEL id):xs) = "LABEL " ++ id ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((JUMP1 id):xs) = "JUMP " ++ id ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((JUMP2 val):xs) = "JUMP " ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter (RET:xs) = "RET" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (BEGIN:xs) = "BEGIN" ++ "\n" ++ prettyPrinter xs
+prettyPrinter (HALT:xs) = "HALT" ++ "\n" ++ prettyPrinter xs
+prettyPrinter [] = ""
