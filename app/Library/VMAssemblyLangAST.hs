@@ -1,4 +1,4 @@
-module Library.AssemblyLanguageAST where
+module Library.VMAssemblyLangAST where
 
 
 data Registers =    TempReg
@@ -26,7 +26,7 @@ data Opcodes =  DEFINE Ident
                 | LABEL Ident [Ident]
                 | JUMP1 Ident
                 | JUMP2 Value
-                | RET Value
+                | RET
                 | BEGIN
                 | HALT
 

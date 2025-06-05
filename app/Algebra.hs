@@ -3,7 +3,7 @@ module Algebra where
 
 import AbstractSyntax
 
-data CAlgebra p me s e v env en st inc typ = CAlgebra {
+data CAlgebra p me s e v env en st typ = CAlgebra {
     program :: env -> me -> (env,p),
 
     memberBlock :: env -> [me] -> (env,me),
@@ -49,10 +49,7 @@ data CAlgebra p me s e v env en st inc typ = CAlgebra {
     structVar :: env -> VarType -> Identifier -> (env,v)
     }
 
-orderProgram :: Program -> Program
-orderProgram (Program p) = undefined
-
-cFolder :: CAlgebra p me s e v env en st inc typ -> env -> Program -> (env, p)
+cFolder :: CAlgebra p me s e v env en st typ -> env -> Program -> (env, p)
 cFolder CAlgebra{..} = fold
     where
         fold env (Program p) = program env2 mes
@@ -61,7 +58,7 @@ cFolder CAlgebra{..} = fold
 
         mefold env1 (MemberBlock mems) = memberBlock env2 sfirst
             where
-                g env (x:xs) total = let (tempenv, temps) = mefold env x in g tempenv xs (temps:total)
+                g env (x:xs) total = let (tempenv, temps) = mefold env x in g tempenv xs (total++[temps])
                 g env [] total = (env, total)
                 (env2, sfirst) = g env1 mems []
         mefold env1 (MemberDeclaration v) = memberDecl env2 vfirst
@@ -72,7 +69,7 @@ cFolder CAlgebra{..} = fold
                 (env2, sfirst) = sfold env1 s
         mefold env1 (MemberFunction vart id vars stats) = memberFunc env3 vart id vfirst sfirst
             where
-                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (tempv:total)
+                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (total++[tempv])
                 g env [] total = (env, total)
                 (env2, vfirst) = g env1 vars []
                 (env3, sfirst) = sfold env2 stats
@@ -97,7 +94,7 @@ cFolder CAlgebra{..} = fold
 
         stfold env1 (Struct id vars) = struct env2 id vfirst
             where
-                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (tempv:total)
+                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (total++[tempv])
                 g env [] total = (env, total)
                 (env2, vfirst) = g env1 vars []
 
@@ -105,7 +102,7 @@ cFolder CAlgebra{..} = fold
 
         typfold env1 (Def1 (Struct stid vars) id) = def11 env2 stid vfirst id
             where
-                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (tempv:total)
+                g env (x:xs) total = let (tempenv, tempv) = vfold env x in g tempenv xs (total++[tempv])
                 g env [] total = (env, total)
                 (env2, vfirst) = g env1 vars []
         typfold env1 (Def1 (StructTypedef stid) id) = def12 env1 stid id
@@ -119,7 +116,7 @@ cFolder CAlgebra{..} = fold
 
         sfold env1 (StatementBlock stats) = statBlock env2 sfirst
             where
-                g env (x:xs) total = let (tempenv, tempstat) = sfold env x in g tempenv xs (tempstat:total)
+                g env (x:xs) total = let (tempenv, tempstat) = sfold env x in g tempenv xs (total++[tempstat])
                 g env [] total = (env,total)
                 (env2, sfirst) = g env1 stats []
         sfold env1 (StatementDeclaration v) = statDecl env2 vfirst
@@ -155,7 +152,7 @@ cFolder CAlgebra{..} = fold
                 (env2, efirst) = efold env1 e1
         efold env1 (FuncCall id eps) = funcCall env2 id exps
             where
-                g (x:xs) env exps = let (newEnv, newE) = efold env x in g xs newEnv (newE:exps)
+                g (x:xs) env exps = let (newEnv, newE) = efold env x in g xs newEnv (exps++[newE])
                 g [] env exps = (env, exps)
 
                 (env2, exps) = g eps env1 []

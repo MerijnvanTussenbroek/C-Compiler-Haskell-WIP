@@ -164,6 +164,7 @@ pStatementIfElse = do
 
 pStatementDeclaration :: Parser Token Statements
 pStatementDeclaration = (\(mod, vartype, exps) -> foldOverExpression2 mod vartype exps []) <$> pDeclaration <* pSemi
+                        <|> pEnumDecl <* pSemi
 
 pStatementWhile :: Parser Token Statements
 pStatementWhile = do
@@ -203,6 +204,13 @@ pDeclaration = do
     vartype <-  parseType <|> (SelfDefined <$> parseTokenName)
     exps <- listOf (pBinaryExpression pAfterBinaryExpression) (p Comma)
     return (mod, vartype, exps)
+
+pEnumDecl :: Parser Token Statements
+pEnumDecl = do
+    p EnumToken
+    enumName <- parseTokenName
+    varName <- parseTokenName
+    return (StatementDeclaration (EnumVar (SelfDefined enumName) varName))
 
 foldOverExpression :: Modifier -> VarType -> [Expression] -> [Members] -> Members
 foldOverExpression mod var (alg@(BinaryExp Assignment (LitVar x) e2):xs) s = foldOverExpression mod var xs (MemberBlock[MemberDeclaration (Var mod var x), MemberStatement (StatementExpression alg)]:s)
