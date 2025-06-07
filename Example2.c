@@ -2,13 +2,10 @@ int main()
 {
     int x = 5;
 
-    if(x < 6)
+    
+    while(x < 7)
     {
-        x = 3;
-    }
-    else
-    {
-        x = 5;
+        x++;
     }
 
     return 0;

@@ -135,7 +135,11 @@ dStatIfEl _ exp stat1 stat2 = ((),exp ++ [JUMP2 2] ++ [PUSH 1] ++ [JUMP2 (l1 + 2
         l2 = length stat2
 
 dStatWhi :: () -> Exps -> Stats -> ((),Stats)
-dStatWhi _ _ _ = ((),[]) --yet to be implemented
+dStatWhi _ exp stat = ((),exp ++ [NOT] ++ [JUMP2 (l1 + 2)] ++ stat ++ x)
+    where
+        l1 = length stat
+        l2 = length exp + 1
+        x = [PUSH 1, JUMP2 (-(l1 + l2 + 3))]
 
 dBinExp :: () -> Operator -> Exps -> Exps -> ((),Exps)
 dBinExp _ Assignment [LOAD x] exps2 = ((),exps2 ++ [SET x])
