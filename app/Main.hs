@@ -14,7 +14,7 @@ import CodeGen
 
 main :: IO ()
 main = do
-    let filepath =  "C:/Users/merij/Desktop/hobby's/C_compiler/Example.C"
+    let filepath =  "C:/Users/merij/Desktop/hobby's/C_compiler/Example2.C"
     --putStrLn "Input path"
     --filepath <- getLine
     input <- readFile filepath

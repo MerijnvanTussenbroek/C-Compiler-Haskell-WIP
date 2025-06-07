@@ -1,20 +1,15 @@
-
-enum test
-{
-    HIGH,
-    LOW
-};
-
 int main()
 {
     int x = 5;
-    x++;
 
-    int y = x++;
+    if(x < 6)
+    {
+        x = 3;
+    }
+    else
+    {
+        x = 5;
+    }
 
-    enum test x;
-
-    y = ++x;
-
-    y--;
+    return 0;
 }
