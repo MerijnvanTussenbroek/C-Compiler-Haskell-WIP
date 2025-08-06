@@ -1,21 +1,30 @@
 
+typedef unsigned int testing;
+
+enum test
+{
+    HIGH = 0,
+    MID = 1,
+    LOW = 5
+};
+
+enum test2
+{
+    ME,
+    TEST,
+    MYSELF = 3,
+    I = 4
+};
+
+
 int main()
 {
-    int x = 5;
-    int y = 7;
+    enum test2 var;
 
-    int z = Double(x);
+    testing v;
 
-    y = 5 + Square(y);
-    return 0;
-}
+    var = TEST;
+    var = I;
 
-int Double(int x)
-{
-    return 2 * x;
-}
-
-int Square(int y)
-{
-    return y * y;
+    return 1;
 }

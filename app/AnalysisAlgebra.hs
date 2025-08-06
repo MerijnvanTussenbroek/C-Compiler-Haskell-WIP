@@ -10,7 +10,6 @@ data AnalysisErrors = NoErrors
                         | ScopeError String
                         | TypeError String
                         | ScopeAndTypeError String
-    deriving Eq
 
 instance Show AnalysisErrors where
     show :: AnalysisErrors -> String

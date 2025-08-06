@@ -129,10 +129,10 @@ dStatIfEl :: () -> Exps -> Stats -> Stats -> ((),Stats)
 dStatIfEl _ exp stat1 [] = ((),exp ++ [JUMP2 2] ++ [PUSH 1] ++ [JUMP2 l1] ++ stat1) --yet to be implemented
     where
         l1 = length stat1
-dStatIfEl _ exp stat1 stat2 = ((),exp ++ [JUMP2 2] ++ [PUSH 1] ++ [JUMP2 (l1 + 2)] ++ stat1 ++ [JUMP2 (l2 + 1)] ++ stat2) --yet to be implemented
+dStatIfEl _ exp stat1 stat2 = ((),exp ++ [JUMP2 l1] ++ stat2 ++ [PUSH 1, JUMP2 l2] ++ stat1)
     where
-        l1 = length stat1
-        l2 = length stat2
+        l1 = length stat2 + 2
+        l2 = length stat1
 
 dStatWhi :: () -> Exps -> Stats -> ((),Stats)
 dStatWhi _ exp stat = ((),exp ++ [NOT] ++ [JUMP2 (l1 + 2)] ++ stat ++ x)

@@ -1,12 +1,24 @@
+
+
 int main()
 {
-    int x = 5;
 
+    int test = 5;
+
+    int result = factorial(test);
+
+    return 1;
+}
+
+int factorial(int x)
+{
     
-    while(x < 7)
+    if(x == 0)
     {
-        x++;
+        return 1;
     }
-
-    return 0;
+    else
+    {
+        return x * factorial(x-1);
+    }
 }

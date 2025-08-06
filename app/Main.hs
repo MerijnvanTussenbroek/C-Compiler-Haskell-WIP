@@ -14,7 +14,7 @@ import CodeGen
 
 main :: IO ()
 main = do
-    let filepath =  "C:/Users/merij/Desktop/hobby's/C_compiler/Example2.C"
+    let filepath =  "C:/Users/merij/Desktop/hobby's/C_compiler/Example.C"
     --putStrLn "Input path"
     --filepath <- getLine
     input <- readFile filepath
@@ -30,11 +30,13 @@ main = do
     putStrLn"\nBegin Desugaring\n"
     let (env, ast) = desugerar z
     print ast
-    putStrLn "\nBegin compiling\n"
-    let (a,b) = compiler ast
-    let c = addHALT False b
-    let d = prettyPrinter c
-    putStrLn d
+    --putStrLn "\n\n\n"
+    --print env
+    --putStrLn "\nBegin compiling\n"
+    --let (a,b) = compiler ast
+    --let c = addHALT False b
+    --let d = prettyPrinter c
+    --putStrLn d
     -- we skip the checkers for now, as we do with the desugerar, we will only use correct programs for now
     
 run :: Parser s a -> [s] -> a
@@ -62,7 +64,7 @@ reorder (Program x) _ _ _ _ = Program x
 
 addHALT :: Bool -> Prog -> Prog
 addHALT _ ((LABEL "main"):xs) = LABEL "main" : addHALT True xs
-addHALT True ((PUSH 0):RET:xs) = HALT : addHALT False xs
+addHALT True ((PUSH 1):RET:xs) = HALT : addHALT False xs
 addHALT False (x:xs) = x : addHALT False xs
 addHALT y (x:xs) = x : addHALT y xs
 addHALT _ [] = []

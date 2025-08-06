@@ -65,7 +65,7 @@ pMemberEnum = do
     
 
 pEnumDecls :: Parser Token Statements
-pEnumDecls = StatementBlock . reverse <$> listOf (StatementExpression <$> pBinaryExpression pLiteral) (p Comma)
+pEnumDecls = StatementBlock <$> listOf (StatementExpression <$> pBinaryExpression pLiteral) (p Comma)
 
 pMemberStruct :: Parser Token Members
 pMemberStruct = do

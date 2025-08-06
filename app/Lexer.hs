@@ -99,11 +99,11 @@ lexers =    [
             lexModifier,
             lexBrackets,
             lexSymbols,
+            lexOperator,
             lexInteger,
             lexDouble,
             lexChar,
             lexString,
-            lexOperator,
             lexIdentifier
             ]
 

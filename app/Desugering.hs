@@ -8,7 +8,7 @@ import Library.EnvironmentLibrary
 -- this way, I don't have to add semantics for all possible operators
 
 
-desugerar = cFolder desugeringAlgebra (DesEnv [] [] [] 0)
+desugerar = cFolder desugeringAlgebra (DesEnv [] [])
 
 desugeringAlgebra :: CAlgebra Program Members Statements Expression Variable DesEnv Enumerator Struct TypeDef
 desugeringAlgebra = CAlgebra
@@ -75,10 +75,10 @@ dMemberEnum :: DesEnv -> Enumerator -> (DesEnv, Members)
 dMemberEnum desenv enum = (addEnum desenv enum, MemberBlock [])
 
 dMemberStruct :: DesEnv -> Struct -> (DesEnv, Members)
-dMemberStruct desenv str = (desenv, MemberStruct str)
+dMemberStruct desenv str = (desenv, MemberBlock []) -- yet to be implemented
 
 dMemberInc :: DesEnv -> String -> (DesEnv, Members)
-dMemberInc desenv name = (desenv, MemberInclude name)
+dMemberInc desenv name = (desenv, MemberBlock [])
 
 dMemberTypedef :: DesEnv -> TypeDef -> (DesEnv, Members)
 dMemberTypedef desenv typ = (addTypeDef desenv typ, MemberBlock [])
@@ -146,7 +146,7 @@ dLitDouble :: DesEnv -> Double -> (DesEnv, Expression)
 dLitDouble desenv double = (desenv, LitDouble double)
 
 dLitVar :: DesEnv -> Identifier -> (DesEnv, Expression)
-dLitVar desenv id = (desenv, LitVar id)
+dLitVar desenv id = (desenv, searchForVariable desenv (LitVar id))
 
 dLitPointer :: DesEnv -> VarType -> Identifier -> (DesEnv, Expression)
 dLitPointer desenv vart id = (desenv, LitPointer vart id)
@@ -155,13 +155,15 @@ dLitArray :: DesEnv -> Identifier -> Int -> (DesEnv, Expression)
 dLitArray desenv id int = (desenv, LitArray id int)
 
 dVar :: DesEnv -> Modifier -> VarType -> Identifier -> (DesEnv, Variable)
+dVar desenv@(DesEnv enums deffs) mod (SelfDefined x) id  | isEnum x enums = (desenv, Var mod IntType id)
+                                    | otherwise = (desenv, Var mod (SelfDefined x) id)
 dVar desenv mod vart id = (desenv, Var mod vart id)
 
 dArrayVar :: DesEnv -> Modifier -> VarType -> Identifier -> Int -> (DesEnv, Variable)
 dArrayVar  desenv mod vart id int = (desenv, ArrayVar mod vart id int)
 
 dEnumVar :: DesEnv -> VarType -> Identifier -> (DesEnv, Variable)
-dEnumVar desenv vart id = (desenv, EnumVar vart id)
+dEnumVar desenv vart id = (desenv, Var None IntType id)
 
 dStructVar :: DesEnv -> VarType -> Identifier -> (DesEnv, Variable)
 dStructVar desenv vart id = (desenv, StructVar vart id)
