@@ -58,7 +58,7 @@ reorder (Program (MemberBlock ((MemberFunction vart id vars stats):xs))) en ty g
 reorder (Program (MemberBlock ((MemberEnum enum):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) (en++[MemberEnum enum]) ty gl fu 
 reorder (Program (MemberBlock ((MemberStruct str):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
 reorder (Program (MemberBlock ((MemberInclude id):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
-reorder (Program (MemberBlock ((MemberTypedef typdef):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en ty gl fu --discared
+reorder (Program (MemberBlock ((MemberTypedef typdef):xs))) en ty gl fu = reorder (Program (MemberBlock xs)) en (ty ++ [MemberTypedef typdef]) gl fu
 reorder (Program (MemberBlock [])) en ty gl fu = Program (MemberBlock (en++ty++gl++fu)) 
 reorder (Program x) _ _ _ _ = Program x
 

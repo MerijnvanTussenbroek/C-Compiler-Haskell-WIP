@@ -4,6 +4,9 @@ import AbstractSyntax
 import Algebra
 import Library.EnvironmentLibrary
 
+import Data.Maybe
+import Debug.Trace
+
 -- this here is for desugering the datastructure before we start folding over it
 -- this way, I don't have to add semantics for all possible operators
 
@@ -155,8 +158,10 @@ dLitArray :: DesEnv -> Identifier -> Int -> (DesEnv, Expression)
 dLitArray desenv id int = (desenv, LitArray id int)
 
 dVar :: DesEnv -> Modifier -> VarType -> Identifier -> (DesEnv, Variable)
-dVar desenv@(DesEnv enums deffs) mod (SelfDefined x) id  | isEnum x enums = (desenv, Var mod IntType id)
-                                    | otherwise = (desenv, Var mod (SelfDefined x) id)
+dVar desenv@(DesEnv enums deffs) mod (SelfDefined x) id | isNothing result1 = (desenv, Var mod (SelfDefined x) id)  
+                                                        | otherwise = (desenv, fromJust result1)
+    where
+        result1 = searchTypedefs id x deffs
 dVar desenv mod vart id = (desenv, Var mod vart id)
 
 dArrayVar :: DesEnv -> Modifier -> VarType -> Identifier -> Int -> (DesEnv, Variable)

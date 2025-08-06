@@ -38,14 +38,16 @@ searchEnum (Enum enumID (StatementBlock ((StatementExpression (LitVar name)):xs)
                                                                                             | otherwise = searchEnum (Enum enumID (StatementBlock  xs)) id (BinaryExp Add int (LitInt 1))
 searchEnum (Enum enumID (StatementBlock [])) id int = LitVar id
 
-searchTypedefs :: Identifier -> [TypeDef] -> Maybe Variable
-searchTypedefs x ((Def1 (Struct ids vars) id):ys)   | x == id = Just (StructVar (SelfDefined ids) x)
-                                                    | otherwise = searchTypedefs x ys
-searchTypedefs x ((Def1 (StructTypedef ids) id):ys) | x == id = Just (StructVar (SelfDefined ids) x)
-                                                    | otherwise = searchTypedefs x ys
-searchTypedefs x ((Def2 mod vt id):ys) = undefined
-searchTypedefs x ((Def3 enum id):ys) = undefined
-searchTypedefs x [] = Nothing
+searchTypedefs :: Identifier -> Identifier -> [TypeDef] -> Maybe Variable
+searchTypedefs acid x ((Def1 (Struct ids vars) id):ys)      | x == id = Just (StructVar (SelfDefined ids) acid)
+                                                            | otherwise = searchTypedefs acid x ys
+searchTypedefs acid x ((Def1 (StructTypedef ids) id):ys)    | x == id = Just (StructVar (SelfDefined ids) acid)
+                                                            | otherwise = searchTypedefs acid x ys
+searchTypedefs acid x ((Def2 mod vt id):ys) | x == id = Just (Var mod vt acid)
+                                            | otherwise = searchTypedefs acid x ys
+searchTypedefs acid x ((Def3 enum id):ys)   | x == id = Just (Var None IntType acid)
+                                            | otherwise = searchTypedefs acid x ys
+searchTypedefs acid x [] = Nothing
 
 isEnum :: Identifier -> [Enumerator] -> Bool
 isEnum x ((Enum id st):ys)  | x == id = True
