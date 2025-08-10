@@ -4,4 +4,4 @@ This is a C "compiler" made completely in Haskell. This is able to lex and parse
 
 The parser library was ispired by the uu-tc library available on gitlab
 
-I might add onto this project later, but for now I am finished.
+The first iteration is done, but the compiler is not yet complete.
