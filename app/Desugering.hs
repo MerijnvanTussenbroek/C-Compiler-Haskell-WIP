@@ -5,7 +5,6 @@ import Algebra
 import Library.EnvironmentLibrary
 
 import Data.Maybe
-import Debug.Trace
 
 -- this here is for desugering the datastructure before we start folding over it
 -- this way, I don't have to add semantics for all possible operators

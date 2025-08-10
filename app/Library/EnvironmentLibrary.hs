@@ -65,4 +65,48 @@ isTypedef _ [] = False
 
 -- checker environment
 
-data CheckEnv = CheckEnv [Variable] [Members] [TypeDef] [Enumerator]
+data CheckEnv = CheckEnv [(Identifier, VarType)] [(Identifier, VarType)] [Identifier] [Identifier]
+
+-- variables, functions, scope, type
+
+cAddVar :: CheckEnv -> Variable -> CheckEnv
+cAddVar (CheckEnv vars mems vp fp) (Var mod vt id) = CheckEnv ((id, vt):vars) mems vp fp
+cAddVar (CheckEnv vars mems vp fp) (ArrayVar mod vt id int) = CheckEnv ((id, vt):vars) mems vp fp
+cAddVar (CheckEnv vars mems vp fp) (EnumVar vt id) = CheckEnv ((id, vt):vars) mems vp fp
+cAddVar (CheckEnv vars mems vp fp) (StructVar vt id) = CheckEnv ((id, vt):vars) mems vp fp
+
+cAddFunc :: CheckEnv -> Members -> CheckEnv
+cAddFunc (CheckEnv vars1 mems vp fp) (MemberFunction vt id vars2 stat) = CheckEnv vars1 ((id, vt):mems) vp fp
+cAddFunc (CheckEnv vars1 mems vp fp) _ = CheckEnv vars1 mems vp fp
+
+cCheckerVar :: CheckEnv -> Variable -> Bool
+cCheckerVar (CheckEnv vars mems vp fp) (Var mod vt id) = checker vars (id, vt)
+cCheckerVar (CheckEnv vars mems vp fp) (ArrayVar mod vt id int) = checker vars (id, vt)
+cCheckerVar (CheckEnv vars mems vp fp) (EnumVar vt id) = checker vars (id, vt)
+cCheckerVar (CheckEnv vars mems vp fp) (StructVar vt id) = checker vars (id, vt)
+
+cCheckerFunc :: CheckEnv -> Members -> Bool
+cCheckerFunc (CheckEnv vars1 mems vp fp) (MemberFunction vt id vars2 stat) = checker vars1 (id, vt)
+cCheckerFunc (CheckEnv vars1 mems vp fp) _ = False
+
+checker :: [(Identifier, VarType)] -> (Identifier, VarType) -> Bool
+checker ((id1, vt1):xs) alg@(id2, vt2)  | id1 == id2 = vt1 == vt2
+                                        | otherwise = checker xs alg
+checker [] _ = False
+
+getVarType :: CheckEnv -> Identifier -> VarType
+getVarType (CheckEnv ((id1, vt1):xs) mems vp fp) id2    | id1 == id2 = vt1
+                                                        | otherwise = getVarType (CheckEnv xs mems vp fp) id2
+getVarType (CheckEnv [] mems vp fp) id = SelfDefined id
+
+getFuncType :: CheckEnv -> Identifier -> VarType
+getFuncType (CheckEnv vars1 ((id1, vt1):xs) vp fp) id2  | id1 == id2 = vt1
+                                                        | otherwise = getFuncType (CheckEnv vars1 xs vp fp) id2
+getFuncType (CheckEnv vars1 [] vp fp) id = SelfDefined id
+
+typeProblem :: CheckEnv -> Identifier -> CheckEnv
+typeProblem (CheckEnv vars mems vp fp) id = CheckEnv vars mems vp (id:fp)
+
+scopeProblem :: CheckEnv -> Identifier -> CheckEnv
+scopeProblem (CheckEnv vars mems vp fp) id = CheckEnv vars mems (id:vp) fp
+

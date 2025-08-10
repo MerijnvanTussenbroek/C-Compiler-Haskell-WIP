@@ -29,14 +29,13 @@ main = do
     print z
     putStrLn"\nBegin Desugaring\n"
     let (env, ast) = desugerar z
-    print ast
-    --putStrLn "\n\n\n"
-    --print env
-    --putStrLn "\nBegin compiling\n"
-    --let (a,b) = compiler ast
-    --let c = addHALT False b
-    --let d = prettyPrinter c
-    --putStrLn d
+    let (env2, ast2) = analyse ast
+    print ast2
+    putStrLn "\nBegin compiling\n"
+    let (a,b) = compiler ast
+    let c = addHALT False b
+    let d = prettyPrinter c
+    putStrLn d
     -- we skip the checkers for now, as we do with the desugerar, we will only use correct programs for now
     
 run :: Parser s a -> [s] -> a

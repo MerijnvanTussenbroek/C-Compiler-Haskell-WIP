@@ -158,10 +158,10 @@ dLitInt :: () -> Int -> ((),Exps)
 dLitInt _ int = ((),[PUSH int])
 
 dLitChar :: () -> Char -> ((),Exps)
-dLitChar _ _ = ((),[]) --yet to be implemented
+dLitChar _ chara = ((),[PUSH3 chara]) --yet to be implemented
 
 dLitDouble :: () -> Double -> ((),Exps)
-dLitDouble _ _ = ((),[]) --yet to be implemented
+dLitDouble _ double = ((),[PUSH2 double]) --yet to be implemented
 
 dLitVar :: () -> Identifier -> ((),Exps)
 dLitVar _ id = ((),[LOAD id])

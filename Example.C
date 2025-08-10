@@ -1,5 +1,5 @@
 
-typedef unsigned int testing;
+typedef int testing;
 
 enum test
 {
@@ -25,6 +25,10 @@ int main()
 
     var = TEST;
     var = I;
+
+    double y = 4.3;
+
+    char x = 'y';
 
     return 1;
 }

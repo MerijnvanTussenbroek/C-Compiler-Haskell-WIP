@@ -16,6 +16,8 @@ data Opcodes =  DEFINE Ident
                 | LOAD Ident
 
                 | PUSH Value
+                | PUSH2 Double
+                | PUSH3 Char
                 | POP
 
                 | ADD
@@ -51,6 +53,8 @@ prettyPrinter ((SET id):xs) = "SET " ++ id ++ "\n" ++ prettyPrinter xs
 prettyPrinter ((LOAD id):xs) = "LOAD " ++ id ++ "\n" ++ prettyPrinter xs
 
 prettyPrinter ((PUSH val):xs) = "PUSH " ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((PUSH2 val):xs) = "PUSH " ++ show val ++ "\n" ++ prettyPrinter xs
+prettyPrinter ((PUSH3 val):xs) = "PUSH " ++ [val] ++ "\n" ++ prettyPrinter xs
 prettyPrinter (POP:xs) = "POP" ++ "\n" ++ prettyPrinter xs
 
 prettyPrinter (ADD:xs) = "ADD" ++ "\n" ++ prettyPrinter xs

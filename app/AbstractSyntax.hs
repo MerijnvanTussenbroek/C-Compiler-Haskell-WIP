@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 module AbstractSyntax where
 
 -- Tokens for the Lexer
@@ -91,7 +92,19 @@ data VarType    = Void
                 | PointerType VarType
 
                 | SelfDefined Identifier
-    deriving(Show, Eq)
+    deriving(Show)
+
+instance Eq VarType where
+    (==) :: VarType -> VarType -> Bool
+    (==) Void Void = True
+    (==) DoubleType DoubleType = True
+    (==) IntType IntType = True
+    (==) CharType CharType = True
+    (==) (PointerType x) (PointerType y) = x == y
+    (==) (SelfDefined x) (SelfDefined y) = x == y
+    (==) _ _ = False
+    (/=) :: VarType -> VarType -> Bool
+    (/=) a b = not (a == b)
 
 data Variable   = Var Modifier VarType Identifier
                 | ArrayVar Modifier VarType Identifier Int

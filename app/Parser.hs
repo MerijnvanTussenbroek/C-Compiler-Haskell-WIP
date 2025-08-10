@@ -303,7 +303,7 @@ litInt :: Parser Token Expression
 litInt = LitInt <$> parseTokenInt
 
 litChar :: Parser Token Expression
-litChar = LitChar <$> parseTokenChar
+litChar = LitChar . head <$ p Apostrofy <*> parseTokenName <* p Apostrofy
 
 litDouble :: Parser Token Expression
 litDouble = LitDouble <$> parseTokenDouble
